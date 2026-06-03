@@ -1,0 +1,19 @@
+{
+  "name": "Versao Vegana",
+  "short_name": "Versao Vegana",
+  "description": "Sistema de vendas, producao e autoatendimento da Versao Vegana.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fbf8f2",
+  "theme_color": "#5b0f20",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/vv.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Supabase Postgres - Versao Vegana",
+  "sourceType": "postgres",
+  "configuration": {
+    "host": "db.zcfngsbfxtrpiuguydlp.supabase.co",
+    "port": 5432,
+    "database": "postgres",
+    "username": "postgres",
+    "password": "<SUPABASE_DB_PASSWORD>",
+    "schemas": ["public"],
+    "ssl_mode": {
+      "mode": "require"
+    },
+    "replication_method": {
+      "method": "Standard"
+    },
+    "tunnel_method": {
+      "tunnel_method": "NO_TUNNEL"
+    }
+  }
+}

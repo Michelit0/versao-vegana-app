@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.env.local
+supabase/seed/*.csv
+*.log
+__pycache__/
+*.pyc
+supabase/mcp_*.txt
+supabase/last_mcp_migration.txt
