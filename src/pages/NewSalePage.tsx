@@ -1,18 +1,20 @@
-import { Save, Trash2 } from "lucide-react";
+import { Plus, Save, Trash2, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { createSale } from "../lib/repository";
+import { createCustomer, createSale } from "../lib/repository";
 import { currency } from "../lib/format";
-import type { Customer, PaymentMethod, Product, SaleItemDraft } from "../types";
+import type { Customer, PaymentMethod, Product, Region, SaleItemDraft } from "../types";
 import { SearchableSelect } from "../components/SearchableSelect";
 
 type NewSalePageProps = {
   customers: Customer[];
   products: Product[];
   paymentMethods: PaymentMethod[];
+  regions: Region[];
+  onCustomerCreated: () => Promise<void>;
   onSaved: () => void;
 };
 
-export function NewSalePage({ customers, products, paymentMethods, onSaved }: NewSalePageProps) {
+export function NewSalePage({ customers, products, paymentMethods, regions, onCustomerCreated, onSaved }: NewSalePageProps) {
   const [customerId, setCustomerId] = useState(customers[0]?.id ?? 0);
   const [paymentMethodId, setPaymentMethodId] = useState(paymentMethods[0]?.id ?? 0);
   const [deliveryFee, setDeliveryFee] = useState(0);
@@ -20,13 +22,22 @@ export function NewSalePage({ customers, products, paymentMethods, onSaved }: Ne
   const [discount, setDiscount] = useState(0);
   const [items, setItems] = useState<SaleItemDraft[]>([{ productId: products[0]?.id ?? 0, quantity: 1, note: "" }]);
   const [saving, setSaving] = useState(false);
+  const [savingCustomer, setSavingCustomer] = useState(false);
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [newCustomerEmail, setNewCustomerEmail] = useState("");
+  const [newCustomerAddress, setNewCustomerAddress] = useState("");
+  const [newCustomerRegionId, setNewCustomerRegionId] = useState(regions[0]?.id ?? 0);
+  const [newCustomerDiet, setNewCustomerDiet] = useState("");
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!customerId && customers[0]) setCustomerId(customers[0].id);
     if (!paymentMethodId && paymentMethods[0]) setPaymentMethodId(paymentMethods[0].id);
+    if (!newCustomerRegionId && regions[0]) setNewCustomerRegionId(regions[0].id);
     setItems((current) => current.map((item) => item.productId ? item : { ...item, productId: products[0]?.id ?? 0 }));
-  }, [customerId, customers, paymentMethodId, paymentMethods, products]);
+  }, [customerId, customers, newCustomerRegionId, paymentMethodId, paymentMethods, products, regions]);
 
   const subtotal = useMemo(() => {
     return items.reduce((sum, item) => {
@@ -56,6 +67,12 @@ export function NewSalePage({ customers, products, paymentMethods, onSaved }: Ne
     label: product.name,
     description: `${product.category} - ${currency.format(product.price)}`
   }));
+  const regionOptions = regions.map((region) => ({
+    value: region.id,
+    label: region.name,
+    description: `Taxa ${currency.format(region.fee)}`
+  }));
+  const newCustomerRegion = regions.find((region) => region.id === newCustomerRegionId);
 
   function updateItem(index: number, patch: Partial<SaleItemDraft>) {
     setItems((current) => current.map((item, currentIndex) => currentIndex === index ? { ...item, ...patch } : item));
@@ -78,11 +95,51 @@ export function NewSalePage({ customers, products, paymentMethods, onSaved }: Ne
     }
   }
 
+  async function submitQuickCustomer() {
+    setMessage(null);
+    if (!newCustomerName.trim() || !newCustomerPhone.trim() || !newCustomerAddress.trim()) {
+      setMessage("Informe nome, telefone e endereço do novo cliente.");
+      return;
+    }
+
+    setSavingCustomer(true);
+    try {
+      const customer = await createCustomer({
+        name: newCustomerName,
+        email: newCustomerEmail,
+        phone: newCustomerPhone,
+        address: newCustomerAddress,
+        regionId: newCustomerRegionId || undefined,
+        region: newCustomerRegion?.name ?? null,
+        dietaryPreferences: newCustomerDiet
+      });
+      setCustomerId(customer.id);
+      setShowCustomerForm(false);
+      setNewCustomerName("");
+      setNewCustomerPhone("");
+      setNewCustomerEmail("");
+      setNewCustomerAddress("");
+      setNewCustomerDiet("");
+      await onCustomerCreated();
+      setMessage("Cliente cadastrado e selecionado na venda atual.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Não foi possível cadastrar o cliente.");
+    } finally {
+      setSavingCustomer(false);
+    }
+  }
+
   return (
     <section className="content-stack">
       <div className="panel">
         <div className="form-grid">
-          <SearchableSelect label="Cliente" value={customerId} options={customerOptions} placeholder="Digite nome, telefone ou região" onChange={setCustomerId} />
+          <div className="sale-customer-field">
+            <SearchableSelect label="Cliente" value={customerId} options={customerOptions} placeholder="Digite nome, telefone ou região" onChange={setCustomerId} />
+            <button className="secondary-action compact-action" type="button" onClick={() => setShowCustomerForm((current) => !current)}>
+              {showCustomerForm ? <X size={16} /> : <UserPlus size={16} />}
+              {showCustomerForm ? "Fechar cadastro" : "Novo cliente"}
+            </button>
+          </div>
           <SearchableSelect label="Forma de pagamento" value={paymentMethodId} options={paymentOptions} placeholder="Digite Pix, crédito..." onChange={setPaymentMethodId} />
           <label>
             Taxa entrega
@@ -97,6 +154,51 @@ export function NewSalePage({ customers, products, paymentMethods, onSaved }: Ne
             <input type="number" min="0" step="0.01" value={discount} onChange={(event) => setDiscount(Number(event.target.value))} />
           </label>
         </div>
+        {showCustomerForm ? (
+          <div className="quick-customer-panel">
+            <div className="quick-customer-heading">
+              <div>
+                <h2>Cadastro rápido de cliente</h2>
+                <span>Salva o cliente e mantém esta venda em andamento.</span>
+              </div>
+              <button className="icon-action" type="button" aria-label="Fechar cadastro rápido" onClick={() => setShowCustomerForm(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="form-grid quick-customer-form">
+              <label>
+                Nome
+                <input value={newCustomerName} onChange={(event) => setNewCustomerName(event.target.value)} placeholder="Nome do cliente" />
+              </label>
+              <label>
+                Telefone
+                <input value={newCustomerPhone} onChange={(event) => setNewCustomerPhone(event.target.value)} placeholder="61999999999" />
+              </label>
+              <label>
+                Email
+                <input type="email" value={newCustomerEmail} onChange={(event) => setNewCustomerEmail(event.target.value)} placeholder="Opcional" />
+              </label>
+              <label>
+                Endereço
+                <input value={newCustomerAddress} onChange={(event) => setNewCustomerAddress(event.target.value)} placeholder="Endereço ou retirada" />
+              </label>
+              <SearchableSelect label="Região" value={newCustomerRegionId} options={regionOptions} placeholder="Digite a região" onChange={setNewCustomerRegionId} />
+              <label>
+                Preferências
+                <input value={newCustomerDiet} onChange={(event) => setNewCustomerDiet(event.target.value)} placeholder="Ex.: sem gluten" />
+              </label>
+            </div>
+            <div className="quick-customer-actions">
+              <button className="secondary-action" type="button" onClick={() => setShowCustomerForm(false)} disabled={savingCustomer}>
+                Cancelar
+              </button>
+              <button className="primary-action" type="button" onClick={submitQuickCustomer} disabled={savingCustomer}>
+                <Plus size={18} />
+                {savingCustomer ? "Salvando cliente..." : "Cadastrar e selecionar"}
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <section className="panel">

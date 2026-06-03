@@ -87,6 +87,8 @@ export function App() {
           customers={customers}
           products={products}
           paymentMethods={paymentMethods}
+          regions={regions}
+          onCustomerCreated={refreshData}
           onSaved={() => {
             setActivePage("sales");
             void refreshData();

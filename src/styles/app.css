@@ -495,6 +495,51 @@ th {
   min-width: 160px;
 }
 
+.sale-customer-field {
+  display: grid;
+  gap: 8px;
+}
+
+.compact-action {
+  min-height: 34px;
+  padding: 0 12px;
+  width: fit-content;
+}
+
+.quick-customer-panel {
+  background: #fbf8f2;
+  border: 1px solid #eadfd2;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.quick-customer-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.quick-customer-heading span {
+  color: #7f685e;
+  display: block;
+  font-size: 0.88rem;
+  margin-top: 4px;
+}
+
+.quick-customer-form {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quick-customer-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .danger-action {
   color: #9c2433;
   margin-top: 12px;
@@ -915,6 +960,15 @@ select {
 
   .line-action {
     max-width: 220px;
+  }
+
+  .quick-customer-form {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-customer-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
   }
 
   .checkout-panel {
