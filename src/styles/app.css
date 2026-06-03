@@ -496,8 +496,17 @@ th {
 }
 
 .sale-customer-field {
-  display: grid;
-  gap: 8px;
+  display: block;
+}
+
+.sale-header-grid {
+  align-items: start;
+}
+
+.sale-secondary-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 12px;
 }
 
 .compact-action {

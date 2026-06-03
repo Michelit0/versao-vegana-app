@@ -132,13 +132,9 @@ export function NewSalePage({ customers, products, paymentMethods, regions, onCu
   return (
     <section className="content-stack">
       <div className="panel">
-        <div className="form-grid">
+        <div className="form-grid sale-header-grid">
           <div className="sale-customer-field">
             <SearchableSelect label="Cliente" value={customerId} options={customerOptions} placeholder="Digite nome, telefone ou região" onChange={setCustomerId} />
-            <button className="secondary-action compact-action" type="button" onClick={() => setShowCustomerForm((current) => !current)}>
-              {showCustomerForm ? <X size={16} /> : <UserPlus size={16} />}
-              {showCustomerForm ? "Fechar cadastro" : "Novo cliente"}
-            </button>
           </div>
           <SearchableSelect label="Forma de pagamento" value={paymentMethodId} options={paymentOptions} placeholder="Digite Pix, crédito..." onChange={setPaymentMethodId} />
           <label>
@@ -154,6 +150,14 @@ export function NewSalePage({ customers, products, paymentMethods, regions, onCu
             <input type="number" min="0" step="0.01" value={discount} onChange={(event) => setDiscount(Number(event.target.value))} />
           </label>
         </div>
+        {!showCustomerForm ? (
+          <div className="sale-secondary-row">
+            <button className="secondary-action compact-action" type="button" onClick={() => setShowCustomerForm(true)}>
+              <UserPlus size={16} />
+              Novo cliente
+            </button>
+          </div>
+        ) : null}
         {showCustomerForm ? (
           <div className="quick-customer-panel">
             <div className="quick-customer-heading">
