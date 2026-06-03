@@ -140,10 +140,12 @@ export function App() {
             <p className="eyebrow">Operacao interna</p>
             <h1>{navItems.find((item) => item.id === activePage)?.label}</h1>
           </div>
-          <button className="primary-action" type="button" onClick={() => setActivePage("new-sale")}>
-            <Plus size={18} />
-            Nova venda
-          </button>
+          {activePage !== "new-sale" ? (
+            <button className="primary-action" type="button" onClick={() => setActivePage("new-sale")}>
+              <Plus size={18} />
+              Nova venda
+            </button>
+          ) : null}
         </header>
         {error ? <div className="alert">{error}</div> : null}
         {page}
