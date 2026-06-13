@@ -93,3 +93,14 @@ export type Category = {
 export type Measure = {
   name: string;
 };
+
+export type RecipeItem = {
+  id: string;
+  recipeId: number | null;
+  productId: number | null;
+  productName: string;
+  resourceId: number | null;
+  resourceName: string;
+  quantity: number | null;
+  measure: string | null;
+};

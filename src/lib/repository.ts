@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import { demoCustomers, demoDashboard, demoPaymentMethods, demoProducts, demoSales } from "./demoData";
-import type { Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, Region, Resource, Sale, SaleItemDraft, Supplier } from "../types";
+import type { Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, RecipeItem, Region, Resource, Sale, SaleItemDraft, Supplier } from "../types";
 
 type NewSaleInput = {
   customerId?: number | null;
@@ -224,6 +224,44 @@ export async function getMeasures(): Promise<Measure[]> {
   const { data, error } = await supabase.from("tipos_medida").select("tipo_medida").order("tipo_medida");
   if (error) throw error;
   return data.map((row: any) => ({ name: row.tipo_medida }));
+}
+
+function mapRecipeItem(row: any, index: number): RecipeItem {
+  return {
+    id: String(row.id_receita_item ?? `${row.id_receita ?? "receita"}-${row.id_produto ?? "produto"}-${row.id_recurso ?? "recurso"}-${index}`),
+    recipeId: row.id_receita ?? null,
+    productId: row.id_produto ?? null,
+    productName: row.nome_produto ?? "Produto sem nome",
+    resourceId: row.id_recurso ?? null,
+    resourceName: row.nome_recurso ?? "Ingrediente sem nome",
+    quantity: row.qtd_ingrediente === null || row.qtd_ingrediente === undefined ? null : Number(row.qtd_ingrediente),
+    measure: row.tipo_medida ?? null
+  };
+}
+
+export async function getRecipeItems(): Promise<RecipeItem[]> {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("receitas")
+    .select("id_receita_item,id_receita,id_produto,nome_produto,id_recurso,nome_recurso,qtd_ingrediente,tipo_medida")
+    .not("id_produto", "is", null)
+    .order("id_produto")
+    .order("id_receita_item");
+
+  if (error && isMissingColumnError(error)) {
+    const { data: legacyData, error: legacyError } = await supabase
+      .from("receitas")
+      .select("id_receita,id_produto,nome_produto,id_recurso,nome_recurso,qtd_ingrediente,tipo_medida")
+      .not("id_produto", "is", null)
+      .order("id_produto")
+      .order("id_receita");
+    if (legacyError) throw legacyError;
+    return legacyData.map(mapRecipeItem);
+  }
+
+  if (error) throw error;
+  return data.map(mapRecipeItem);
 }
 
 export async function getPaymentMethods(): Promise<PaymentMethod[]> {
@@ -512,7 +550,7 @@ export async function createPurchase(input: NewPurchaseInput) {
   return { id };
 }
 
-export async function createSale(input: NewSaleInput) {
+export async function createSale(input: NewSaleInput): Promise<{ id: number }> {
   if (!supabase) {
     await new Promise((resolve) => window.setTimeout(resolve, 500));
     return { id: Math.floor(Math.random() * 100000) };
@@ -604,5 +642,5 @@ export async function createSale(input: NewSaleInput) {
       .eq("id_recurso", resourceId);
     if (stockError) throw stockError;
   }
-  return order;
+  return { id: order.id_pedido };
 }

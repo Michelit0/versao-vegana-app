@@ -657,6 +657,152 @@ select {
   padding: 12px 0;
 }
 
+.kitchen-control-panel,
+.kitchen-recipe-panel {
+  overflow: visible;
+}
+
+.kitchen-control-grid {
+  align-items: end;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(260px, 1fr) minmax(220px, 0.55fr) auto;
+}
+
+.kitchen-progress-card {
+  background: #fbf8f2;
+  border: 1px solid #eadfd2;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  min-height: 76px;
+  padding: 12px;
+}
+
+.kitchen-progress-card span {
+  color: #7f685e;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.kitchen-progress-card strong {
+  color: #5b0f20;
+  font-size: 1.35rem;
+}
+
+.progress-track {
+  background: #eadfd2;
+  border-radius: 999px;
+  height: 9px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: #a7cf5f;
+  border-radius: inherit;
+  height: 100%;
+  transition: width 180ms ease;
+}
+
+.kitchen-reset {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.kitchen-mode-pill {
+  background: #edf7df;
+  border-radius: 999px;
+  color: #526f18;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.recipe-checklist {
+  display: grid;
+  gap: 10px;
+}
+
+.recipe-step {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #eadfd2;
+  border-radius: 8px;
+  color: #231b18;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 34px 46px minmax(0, 1fr) auto;
+  min-height: 76px;
+  padding: 12px;
+  text-align: left;
+}
+
+.recipe-step:hover {
+  border-color: #c8df94;
+  box-shadow: 0 10px 22px rgba(91, 15, 32, 0.08);
+}
+
+.recipe-step.done {
+  background: #f4fae9;
+  border-color: #c8df94;
+}
+
+.recipe-step.done .step-copy strong,
+.recipe-step.done .step-copy small {
+  color: #6f8061;
+  text-decoration: line-through;
+}
+
+.step-number {
+  color: #7f685e;
+  font-weight: 900;
+  text-align: center;
+}
+
+.step-check {
+  align-items: center;
+  border: 2px solid #dcccbf;
+  border-radius: 8px;
+  color: #526f18;
+  display: flex;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+
+.recipe-step.done .step-check {
+  background: #edf7df;
+  border-color: #a7cf5f;
+}
+
+.step-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.step-copy strong {
+  color: #5b0f20;
+  font-size: 1rem;
+}
+
+.step-copy small {
+  color: #7f685e;
+  font-weight: 800;
+}
+
+.stage-pill {
+  background: #fff7e9;
+  border: 1px solid #eadfd2;
+  border-radius: 999px;
+  color: #6a1428;
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
 .self-service-layout {
   display: grid;
   gap: 18px;
@@ -953,6 +1099,7 @@ select {
   .split-layout,
   .form-grid,
   .product-form,
+  .kitchen-control-grid,
   .checkout-bar,
   .self-service-layout {
     grid-template-columns: 1fr;
@@ -989,6 +1136,16 @@ select {
   .cart-list {
     max-height: 420px;
   }
+
+  .recipe-step {
+    align-items: start;
+    grid-template-columns: 28px 42px minmax(0, 1fr);
+  }
+
+  .stage-pill {
+    grid-column: 3;
+    justify-self: start;
+  }
 }
 
 @media (max-width: 680px) {
@@ -1016,6 +1173,16 @@ select {
   .nav-item {
     min-height: 38px;
     padding: 8px 10px;
+  }
+
+  .nav-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .nav-item {
+    min-width: 0;
   }
 
   .main-area {

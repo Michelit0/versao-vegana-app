@@ -1,7 +1,8 @@
-import { BarChart3, ClipboardList, Package, Plus, Settings, ShoppingBag, Users, Wrench } from "lucide-react";
+import { BarChart3, ChefHat, ClipboardList, Package, Plus, Settings, ShoppingBag, Users, Wrench } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CustomersPage } from "./pages/CustomersPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { KitchenPage } from "./pages/KitchenPage";
 import { NewSalePage } from "./pages/NewSalePage";
 import { OperationsPage } from "./pages/OperationsPage";
 import { ProductsPage } from "./pages/ProductsPage";
@@ -9,16 +10,17 @@ import { RegistrationsPage } from "./pages/RegistrationsPage";
 import { SalesPage } from "./pages/SalesPage";
 import { SelfServicePage } from "./pages/SelfServicePage";
 import { SettingsPage } from "./pages/SettingsPage";
-import { getCategories, getCustomers, getDashboard, getMeasures, getPaymentMethods, getProducts, getRegions, getResources, getSales, getSuppliers } from "./lib/repository";
+import { getCategories, getCustomers, getDashboard, getMeasures, getPaymentMethods, getProducts, getRecipeItems, getRegions, getResources, getSales, getSuppliers } from "./lib/repository";
 import { isSupabaseConfigured } from "./lib/supabase";
-import type { Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, Region, Resource, Sale, Supplier } from "./types";
+import type { Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, RecipeItem, Region, Resource, Sale, Supplier } from "./types";
 
-type Page = "dashboard" | "new-sale" | "self-service" | "sales" | "registrations" | "operations" | "customers" | "products" | "settings";
+type Page = "dashboard" | "new-sale" | "self-service" | "kitchen" | "sales" | "registrations" | "operations" | "customers" | "products" | "settings";
 
 const navItems: Array<{ id: Page; label: string; icon: typeof BarChart3 }> = [
   { id: "dashboard", label: "Painel", icon: BarChart3 },
   { id: "new-sale", label: "Nova venda", icon: Plus },
   { id: "self-service", label: "Autoatendimento", icon: ShoppingBag },
+  { id: "kitchen", label: "Cozinha", icon: ChefHat },
   { id: "sales", label: "Pedidos", icon: ClipboardList },
   { id: "registrations", label: "Cadastros", icon: Users },
   { id: "operations", label: "Operações", icon: Wrench },
@@ -37,6 +39,7 @@ export function App() {
   const [regions, setRegions] = useState<Region[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [measures, setMeasures] = useState<Measure[]>([]);
+  const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [dashboard, setDashboard] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,7 +49,7 @@ export function App() {
     setLoading(true);
     setError(null);
     try {
-      const [loadedProducts, loadedCustomers, loadedPayments, loadedSales, loadedDashboard, loadedSuppliers, loadedResources, loadedRegions, loadedCategories, loadedMeasures] = await Promise.all([
+      const [loadedProducts, loadedCustomers, loadedPayments, loadedSales, loadedDashboard, loadedSuppliers, loadedResources, loadedRegions, loadedCategories, loadedMeasures, loadedRecipeItems] = await Promise.all([
         getProducts(),
         getCustomers(),
         getPaymentMethods(),
@@ -56,7 +59,8 @@ export function App() {
         getResources(),
         getRegions(),
         getCategories(),
-        getMeasures()
+        getMeasures(),
+        getRecipeItems()
       ]);
       setProducts(loadedProducts);
       setCustomers(loadedCustomers);
@@ -68,6 +72,7 @@ export function App() {
       setRegions(loadedRegions);
       setCategories(loadedCategories);
       setMeasures(loadedMeasures);
+      setRecipeItems(loadedRecipeItems);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível carregar os dados.");
     } finally {
@@ -98,12 +103,13 @@ export function App() {
     }
     if (activePage === "sales") return <SalesPage sales={sales} loading={loading} />;
     if (activePage === "self-service") return <SelfServicePage paymentMethods={paymentMethods} products={products} onSaved={refreshData} />;
+    if (activePage === "kitchen") return <KitchenPage loading={loading} recipeItems={recipeItems} />;
     if (activePage === "registrations") return <RegistrationsPage categories={categories} customers={customers} measures={measures} products={products} regions={regions} resources={resources} onChanged={refreshData} />;
     if (activePage === "operations") return <OperationsPage measures={measures} products={products} resources={resources} suppliers={suppliers} onChanged={refreshData} />;
     if (activePage === "customers") return <CustomersPage customers={customers} loading={loading} />;
     if (activePage === "products") return <ProductsPage products={products} loading={loading} onChanged={refreshData} />;
     return <SettingsPage supabaseReady={isSupabaseConfigured} onRefresh={refreshData} />;
-  }, [activePage, categories, customers, dashboard, loading, measures, paymentMethods, products, regions, resources, sales, suppliers]);
+  }, [activePage, categories, customers, dashboard, loading, measures, paymentMethods, products, recipeItems, regions, resources, sales, suppliers]);
 
   return (
     <div className="app-shell">
