@@ -17,6 +17,7 @@ type NewSaleInput = {
 };
 
 type NewProductInput = {
+  id?: number;
   name: string;
   description?: string | null;
   category: string;
@@ -29,6 +30,7 @@ type NewProductInput = {
   imageUrl?: string | null;
   tags?: string[];
   featuredSelfService?: boolean;
+  yieldServings?: number;
 };
 
 type NewCustomerInput = {
@@ -65,6 +67,14 @@ type NewRecipeInput = {
   resourceId: number;
   quantity: number;
   measure: string;
+  preparationOrder?: number | null;
+};
+
+type UpdateRecipeItemInput = {
+  id: string;
+  quantity: number;
+  measure: string;
+  preparationOrder?: number | null;
 };
 
 type NewProductionInput = {
@@ -111,7 +121,8 @@ function mapProduct(row: any): Product {
     resourceId: row.id_recurso,
     imageUrl: row.url_imagem ?? null,
     tags: row.etiquetas ?? [],
-    featuredSelfService: Boolean(row.destaque_autoatendimento)
+    featuredSelfService: Boolean(row.destaque_autoatendimento),
+    yieldServings: Number(row.rendimento_pessoas ?? 20)
   };
 }
 
@@ -132,7 +143,7 @@ export async function getProducts(): Promise<Product[]> {
 
   const { data, error } = await supabase
     .from("produtos")
-    .select("id_produto,nome_produto,descricao,desc_categoria,preco,disponibilidade,peso,tipo_medida,id_recurso,url_imagem,etiquetas,destaque_autoatendimento")
+    .select("id_produto,nome_produto,descricao,desc_categoria,preco,disponibilidade,peso,tipo_medida,id_recurso,url_imagem,etiquetas,destaque_autoatendimento,rendimento_pessoas")
     .order("nome_produto");
 
   if (error && isMissingColumnError(error)) {
@@ -235,7 +246,8 @@ function mapRecipeItem(row: any, index: number): RecipeItem {
     resourceId: row.id_recurso ?? null,
     resourceName: row.nome_recurso ?? "Ingrediente sem nome",
     quantity: row.qtd_ingrediente === null || row.qtd_ingrediente === undefined ? null : Number(row.qtd_ingrediente),
-    measure: row.tipo_medida ?? null
+    measure: row.tipo_medida ?? null,
+    preparationOrder: row.ordem_preparo === null || row.ordem_preparo === undefined ? null : Number(row.ordem_preparo)
   };
 }
 
@@ -244,7 +256,7 @@ export async function getRecipeItems(): Promise<RecipeItem[]> {
 
   const { data, error } = await supabase
     .from("receitas")
-    .select("id_receita_item,id_receita,id_produto,nome_produto,id_recurso,nome_recurso,qtd_ingrediente,tipo_medida")
+    .select("id_receita_item,id_receita,id_produto,nome_produto,id_recurso,nome_recurso,qtd_ingrediente,tipo_medida,ordem_preparo")
     .not("id_produto", "is", null)
     .order("id_produto")
     .order("id_receita_item");
@@ -351,7 +363,8 @@ export async function createProduct(input: NewProductInput): Promise<Product> {
       resourceId: input.resourceId ?? null,
       imageUrl: input.imageUrl ?? null,
       tags: input.tags ?? [],
-      featuredSelfService: input.featuredSelfService ?? false
+      featuredSelfService: input.featuredSelfService ?? false,
+      yieldServings: input.yieldServings ?? 20
     };
   }
 
@@ -371,22 +384,85 @@ export async function createProduct(input: NewProductInput): Promise<Product> {
     url_imagem: input.imageUrl?.trim() || null,
     etiquetas: input.tags ?? [],
     destaque_autoatendimento: input.featuredSelfService ?? false,
+    rendimento_pessoas: input.yieldServings ?? 20,
     data_inclusao: new Date().toISOString()
   };
 
   const { data, error } = await client
     .from("produtos")
     .insert(row)
-    .select("id_produto,nome_produto,descricao,desc_categoria,preco,disponibilidade,peso,tipo_medida,id_recurso,url_imagem,etiquetas,destaque_autoatendimento")
+    .select("id_produto,nome_produto,descricao,desc_categoria,preco,disponibilidade,peso,tipo_medida,id_recurso,url_imagem,etiquetas,destaque_autoatendimento,rendimento_pessoas")
     .single();
 
   if (error && isMissingColumnError(error)) {
-    const { descricao, destaque_autoatendimento, ...legacyRow } = row;
+    const { descricao, destaque_autoatendimento, rendimento_pessoas, ...legacyRow } = row;
     void descricao;
     void destaque_autoatendimento;
+    void rendimento_pessoas;
     const { data: legacyData, error: legacyError } = await client
       .from("produtos")
       .insert(legacyRow)
+      .select("id_produto,nome_produto,desc_categoria,preco,disponibilidade,peso,tipo_medida,id_recurso,url_imagem,etiquetas")
+      .single();
+    if (legacyError) throw legacyError;
+    return mapProduct(legacyData);
+  }
+
+  if (error) throw error;
+  return mapProduct(data);
+}
+
+export async function updateProduct(input: NewProductInput & { id: number }): Promise<Product> {
+  if (!supabase) {
+    return {
+      id: input.id,
+      name: input.name,
+      description: input.description ?? null,
+      category: input.category,
+      price: input.price,
+      available: input.available,
+      weight: input.weight ?? null,
+      measure: input.measure ?? null,
+      resourceId: input.resourceId ?? null,
+      imageUrl: input.imageUrl ?? null,
+      tags: input.tags ?? [],
+      featuredSelfService: input.featuredSelfService ?? false,
+      yieldServings: input.yieldServings ?? 20
+    };
+  }
+
+  const row = {
+    nome_produto: input.name.trim(),
+    descricao: input.description?.trim() || null,
+    categoria: input.categoryId ?? null,
+    desc_categoria: input.category.trim() || "Sem categoria",
+    preco: input.price,
+    disponibilidade: input.available ? "Sim" : "Nao",
+    peso: input.weight ?? null,
+    tipo_medida: input.measure || null,
+    id_recurso: input.resourceId ?? null,
+    url_imagem: input.imageUrl?.trim() || null,
+    etiquetas: input.tags ?? [],
+    destaque_autoatendimento: input.featuredSelfService ?? false,
+    rendimento_pessoas: input.yieldServings ?? 20
+  };
+
+  const { data, error } = await requireSupabase()
+    .from("produtos")
+    .update(row)
+    .eq("id_produto", input.id)
+    .select("id_produto,nome_produto,descricao,desc_categoria,preco,disponibilidade,peso,tipo_medida,id_recurso,url_imagem,etiquetas,destaque_autoatendimento,rendimento_pessoas")
+    .single();
+
+  if (error && isMissingColumnError(error)) {
+    const { descricao, destaque_autoatendimento, rendimento_pessoas, ...legacyRow } = row;
+    void descricao;
+    void destaque_autoatendimento;
+    void rendimento_pessoas;
+    const { data: legacyData, error: legacyError } = await requireSupabase()
+      .from("produtos")
+      .update(legacyRow)
+      .eq("id_produto", input.id)
       .select("id_produto,nome_produto,desc_categoria,preco,disponibilidade,peso,tipo_medida,id_recurso,url_imagem,etiquetas")
       .single();
     if (legacyError) throw legacyError;
@@ -463,17 +539,38 @@ export async function createRecipe(input: NewRecipeInput) {
   const product = products.find((item) => item.id === input.productId);
   const resource = resources.find((item) => item.id === input.resourceId);
   const id = await nextId("receitas", "id_receita");
-  const { error } = await requireSupabase().from("receitas").insert({
+  const row = {
     id_receita: id,
     id_produto: input.productId,
     nome_produto: product?.name ?? null,
     id_recurso: input.resourceId,
     nome_recurso: resource?.name ?? null,
     qtd_ingrediente: input.quantity,
-    tipo_medida: input.measure
-  });
+    tipo_medida: input.measure,
+    ordem_preparo: input.preparationOrder ?? null
+  };
+  const { error } = await requireSupabase().from("receitas").insert(row);
+  if (error && isMissingColumnError(error)) {
+    const { ordem_preparo, ...legacyRow } = row;
+    void ordem_preparo;
+    const { error: legacyError } = await requireSupabase().from("receitas").insert(legacyRow);
+    if (legacyError) throw legacyError;
+    return { id };
+  }
   if (error) throw error;
   return { id };
+}
+
+export async function updateRecipeItem(input: UpdateRecipeItemInput) {
+  const { error } = await requireSupabase()
+    .from("receitas")
+    .update({
+      qtd_ingrediente: input.quantity,
+      tipo_medida: input.measure,
+      ordem_preparo: input.preparationOrder ?? null
+    })
+    .eq("id_receita_item", Number(input.id));
+  if (error) throw error;
 }
 
 export async function createProduction(input: NewProductionInput) {

@@ -13,6 +13,7 @@ export type Product = {
   imageUrl?: string | null;
   tags?: string[];
   featuredSelfService?: boolean;
+  yieldServings?: number;
 };
 
 export type Customer = {
@@ -103,4 +104,5 @@ export type RecipeItem = {
   resourceName: string;
   quantity: number | null;
   measure: string | null;
+  preparationOrder: number | null;
 };

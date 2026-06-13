@@ -133,6 +133,7 @@ function ProductForm({ categories, disabled, measures, onSave, resources }: { ca
   const [imageUrl, setImageUrl] = useState("");
   const [tags, setTags] = useState("");
   const [featuredSelfService, setFeaturedSelfService] = useState(false);
+  const [yieldServings, setYieldServings] = useState(20);
   const [weight, setWeight] = useState(1);
   const [measure, setMeasure] = useState(measures[0]?.name ?? "unidade");
   const [price, setPrice] = useState(0);
@@ -140,7 +141,7 @@ function ProductForm({ categories, disabled, measures, onSave, resources }: { ca
   const category = categories.find((item) => item.value === categoryId);
   const parsedTags = tags.split(",").map((item) => item.trim()).filter(Boolean);
   return (
-    <FormPanel title="Adicionar produto" onSubmit={() => name && price > 0 && onSave({ name, description, category: category?.label ?? "Sem categoria", categoryId, price, available: available === "Sim", weight, measure, resourceId, imageUrl, tags: parsedTags, featuredSelfService })} disabled={disabled}>
+    <FormPanel title="Adicionar produto" onSubmit={() => name && price > 0 && onSave({ name, description, category: category?.label ?? "Sem categoria", categoryId, price, available: available === "Sim", weight, measure, resourceId, imageUrl, tags: parsedTags, featuredSelfService, yieldServings })} disabled={disabled}>
       <label>Nome<input value={name} onChange={(event) => setName(event.target.value)} /></label>
       <SearchableSelect label="Recurso vinculado ao estoque" value={resourceId} options={resources} placeholder="Digite o recurso" onChange={setResourceId} />
       <SearchableSelect label="Categoria" value={categoryId} options={categories} placeholder="Digite a categoria" onChange={setCategoryId} />
@@ -150,6 +151,7 @@ function ProductForm({ categories, disabled, measures, onSave, resources }: { ca
       <label>Peso<input type="number" min="0" step="0.001" value={weight} onChange={(event) => setWeight(Number(event.target.value))} /></label>
       <label>Medida<select value={measure} onChange={(event) => setMeasure(event.target.value)}>{measures.map((item) => <option key={item.name}>{item.name}</option>)}</select></label>
       <label>Preço<input type="number" min="0" step="0.01" value={price} onChange={(event) => setPrice(Number(event.target.value))} /></label>
+      <label>Rendimento da receita<input type="number" min="1" step="1" value={yieldServings} onChange={(event) => setYieldServings(Number(event.target.value))} /></label>
       <label>Disponibilidade<select value={available} onChange={(event) => setAvailable(event.target.value)}><option>Sim</option><option>Não</option></select></label>
       <label className="checkbox-field"><input type="checkbox" checked={featuredSelfService} onChange={(event) => setFeaturedSelfService(event.target.checked)} /> Destaque no autoatendimento</label>
     </FormPanel>
@@ -161,12 +163,14 @@ function RecipeForm({ disabled, measures, onSave, products, resources }: { disab
   const [resourceId, setResourceId] = useState(resources[0]?.value ?? 0);
   const [quantity, setQuantity] = useState(0);
   const [measure, setMeasure] = useState(measures[0]?.name ?? "unidade");
+  const [preparationOrder, setPreparationOrder] = useState(1);
   return (
-    <FormPanel title="Adicionar ingrediente da receita" onSubmit={() => productId && resourceId && quantity > 0 && onSave({ productId, resourceId, quantity, measure })} disabled={disabled}>
+    <FormPanel title="Adicionar ingrediente da receita" onSubmit={() => productId && resourceId && quantity > 0 && onSave({ productId, resourceId, quantity, measure, preparationOrder })} disabled={disabled}>
       <SearchableSelect label="Produto final" value={productId} options={products} placeholder="Digite o produto" onChange={setProductId} />
       <SearchableSelect label="Ingrediente/Recurso" value={resourceId} options={resources} placeholder="Digite o recurso" onChange={setResourceId} />
       <label>Quantidade do ingrediente<input type="number" min="0" step="0.001" value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} /></label>
       <label>Medida<select value={measure} onChange={(event) => setMeasure(event.target.value)}>{measures.map((item) => <option key={item.name}>{item.name}</option>)}</select></label>
+      <label>Ordem de preparo<input type="number" min="1" step="1" value={preparationOrder} onChange={(event) => setPreparationOrder(Number(event.target.value))} /></label>
     </FormPanel>
   );
 }

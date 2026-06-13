@@ -1,9 +1,9 @@
+import { Edit3, Save, Search, Trash2, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import { EmptyState } from "../components/EmptyState";
 import { currency } from "../lib/format";
-import { createProduct, deleteProduct } from "../lib/repository";
+import { createProduct, deleteProduct, updateProduct } from "../lib/repository";
 import type { Product } from "../types";
-import { Save, Search, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
 
 type ProductsPageProps = {
   products: Product[];
@@ -11,17 +11,36 @@ type ProductsPageProps = {
   onChanged: () => void;
 };
 
+type ProductDraft = {
+  name: string;
+  description: string;
+  category: string;
+  imageUrl: string;
+  tags: string;
+  price: number;
+  available: boolean;
+  yieldServings: number;
+};
+
+const blankDraft: ProductDraft = {
+  name: "",
+  description: "",
+  category: "Pratos Principais",
+  imageUrl: "",
+  tags: "",
+  price: 0,
+  available: true,
+  yieldServings: 20
+};
+
 export function ProductsPage({ products, loading, onChanged }: ProductsPageProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Pratos Principais");
-  const [imageUrl, setImageUrl] = useState("");
-  const [tags, setTags] = useState("");
-  const [featuredSelfService, setFeaturedSelfService] = useState(false);
-  const [price, setPrice] = useState(0);
+  const [draft, setDraft] = useState<ProductDraft>(blankDraft);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [editDraft, setEditDraft] = useState<ProductDraft>(blankDraft);
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
   const filteredProducts = useMemo(() => {
     const term = normalize(query);
     if (!term) return products;
@@ -37,33 +56,72 @@ export function ProductsPage({ products, loading, onChanged }: ProductsPageProps
 
   async function submitProduct() {
     setMessage(null);
-    if (!name.trim() || price <= 0) {
-      setMessage("Informe nome e preço maior que zero.");
+    if (!draft.name.trim() || draft.price <= 0) {
+      setMessage("Informe nome e preco maior que zero.");
       return;
     }
     setSaving(true);
     try {
       await createProduct({
-        name,
-        description,
-        category,
-        price,
-        available: true,
+        name: draft.name,
+        description: draft.description,
+        category: draft.category,
+        price: draft.price,
+        available: draft.available,
         weight: 1,
         measure: "unidade",
-        imageUrl,
-        tags: tags.split(",").map((item) => item.trim()).filter(Boolean),
-        featuredSelfService
+        imageUrl: draft.imageUrl,
+        tags: parseTags(draft.tags),
+        featuredSelfService: false,
+        yieldServings: draft.yieldServings
       });
-      setName("");
-      setDescription("");
-      setImageUrl("");
-      setTags("");
-      setFeaturedSelfService(false);
-      setPrice(0);
+      setDraft(blankDraft);
       await onChanged();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Não foi possível salvar o produto.");
+      setMessage(err instanceof Error ? err.message : "Nao foi possivel salvar o produto.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function startEdit(product: Product) {
+    setEditing(product);
+    setEditDraft({
+      name: product.name,
+      description: product.description ?? "",
+      category: product.category,
+      imageUrl: product.imageUrl ?? "",
+      tags: product.tags?.join(", ") ?? "",
+      price: product.price,
+      available: product.available,
+      yieldServings: product.yieldServings ?? 20
+    });
+  }
+
+  async function saveEdit() {
+    if (!editing) return;
+    setMessage(null);
+    setSaving(true);
+    try {
+      await updateProduct({
+        id: editing.id,
+        name: editDraft.name,
+        description: editDraft.description,
+        category: editDraft.category,
+        price: editDraft.price,
+        available: editDraft.available,
+        weight: editing.weight,
+        measure: editing.measure,
+        resourceId: editing.resourceId,
+        imageUrl: editDraft.imageUrl,
+        tags: parseTags(editDraft.tags),
+        featuredSelfService: editing.featuredSelfService ?? false,
+        yieldServings: editDraft.yieldServings
+      });
+      setEditing(null);
+      await onChanged();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Nao foi possivel atualizar o produto.");
     } finally {
       setSaving(false);
     }
@@ -79,7 +137,7 @@ export function ProductsPage({ products, loading, onChanged }: ProductsPageProps
       await deleteProduct(product.id);
       await onChanged();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Não foi possível remover o produto.");
+      setMessage(err instanceof Error ? err.message : "Nao foi possivel remover o produto.");
     } finally {
       setSaving(false);
     }
@@ -90,50 +148,25 @@ export function ProductsPage({ products, loading, onChanged }: ProductsPageProps
 
   return (
     <section className="content-stack">
-      <section className="panel">
-        <div className="panel-heading">
-          <h2>Novo produto</h2>
-        </div>
-        <div className="form-grid product-form">
-          <label>
-            Nome
-            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Produto de teste" />
-          </label>
-          <label>
-            Descrição
-            <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Resumo curto" />
-          </label>
-          <label>
-            Categoria
-            <input value={category} onChange={(event) => setCategory(event.target.value)} />
-          </label>
-          <label>
-            URL da imagem
-            <input value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} placeholder="https://..." />
-          </label>
-          <label>
-            Etiquetas
-            <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="sem gluten, congelado" />
-          </label>
-          <label>
-            Preço
-            <input type="number" min="0" step="0.01" value={price} onChange={(event) => setPrice(Number(event.target.value))} />
-          </label>
-          <label className="checkbox-field">
-            <input type="checkbox" checked={featuredSelfService} onChange={(event) => setFeaturedSelfService(event.target.checked)} />
-            Destaque no autoatendimento
-          </label>
-          <button className="primary-action form-action" type="button" onClick={submitProduct} disabled={saving}>
-            <Save size={18} />
-            {saving ? "Salvando..." : "Salvar produto"}
-          </button>
-        </div>
-        {message ? <div className="alert inline-alert">{message}</div> : null}
-      </section>
+      <ProductFormPanel title="Novo produto" draft={draft} disabled={saving} onChange={setDraft} onSave={submitProduct} actionLabel="Salvar produto" />
+
+      {editing ? (
+        <ProductFormPanel
+          title={`Editar ${editing.name}`}
+          draft={editDraft}
+          disabled={saving}
+          onChange={setEditDraft}
+          onCancel={() => setEditing(null)}
+          onSave={saveEdit}
+          actionLabel="Salvar alteracoes"
+        />
+      ) : null}
+
+      {message ? <div className="alert inline-alert">{message}</div> : null}
 
       <section className="panel">
         <div className="panel-heading">
-          <h2>Cardápio operacional</h2>
+          <h2>Cardapio operacional</h2>
           <span className="muted-count">{filteredProducts.length} de {products.length}</span>
         </div>
         <label className="search-field">
@@ -148,9 +181,14 @@ export function ProductsPage({ products, loading, onChanged }: ProductsPageProps
               {product.description ? <span>{product.description}</span> : null}
               <span>{product.category}</span>
               <b>{currency.format(product.price)}</b>
-              <small>{product.available ? "Disponível" : "Indisponível"}</small>
+              <small>{product.available ? "Disponivel" : "Indisponivel"}</small>
+              <small>Rende {product.yieldServings ?? 20} pessoas</small>
               {product.featuredSelfService ? <em>Destaque no autoatendimento</em> : null}
               {product.tags?.length ? <div className="tag-row">{product.tags.map((tag) => <span key={tag}>{tag}</span>)}</div> : null}
+              <button className="secondary-action" type="button" onClick={() => startEdit(product)} disabled={saving}>
+                <Edit3 size={16} />
+                Editar
+              </button>
               {product.name.toLowerCase().includes("teste") ? (
                 <button className="secondary-action danger-action" type="button" onClick={() => removeProduct(product)} disabled={saving}>
                   <Trash2 size={16} />
@@ -164,6 +202,43 @@ export function ProductsPage({ products, loading, onChanged }: ProductsPageProps
       </section>
     </section>
   );
+}
+
+function ProductFormPanel({ actionLabel, disabled, draft, onCancel, onChange, onSave, title }: {
+  actionLabel: string;
+  disabled: boolean;
+  draft: ProductDraft;
+  onCancel?: () => void;
+  onChange: (draft: ProductDraft) => void;
+  onSave: () => void;
+  title: string;
+}) {
+  return (
+    <section className="panel">
+      <div className="panel-heading">
+        <h2>{title}</h2>
+        {onCancel ? <button className="icon-action" type="button" onClick={onCancel}><X size={17} /></button> : null}
+      </div>
+      <div className="form-grid product-form">
+        <label>Nome<input value={draft.name} onChange={(event) => onChange({ ...draft, name: event.target.value })} placeholder="Produto de teste" /></label>
+        <label>Descricao<input value={draft.description} onChange={(event) => onChange({ ...draft, description: event.target.value })} placeholder="Resumo curto" /></label>
+        <label>Categoria<input value={draft.category} onChange={(event) => onChange({ ...draft, category: event.target.value })} /></label>
+        <label>URL da imagem<input value={draft.imageUrl} onChange={(event) => onChange({ ...draft, imageUrl: event.target.value })} placeholder="https://..." /></label>
+        <label>Etiquetas<input value={draft.tags} onChange={(event) => onChange({ ...draft, tags: event.target.value })} placeholder="sem gluten, congelado" /></label>
+        <label>Preco<input type="number" min="0" step="0.01" value={draft.price} onChange={(event) => onChange({ ...draft, price: Number(event.target.value) })} /></label>
+        <label>Rendimento da receita<input type="number" min="1" step="1" value={draft.yieldServings} onChange={(event) => onChange({ ...draft, yieldServings: Number(event.target.value) })} /></label>
+        <label>Disponibilidade<select value={draft.available ? "Sim" : "Nao"} onChange={(event) => onChange({ ...draft, available: event.target.value === "Sim" })}><option>Sim</option><option>Nao</option></select></label>
+        <button className="primary-action form-action" type="button" onClick={onSave} disabled={disabled}>
+          <Save size={18} />
+          {disabled ? "Salvando..." : actionLabel}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function parseTags(value: string) {
+  return value.split(",").map((item) => item.trim()).filter(Boolean);
 }
 
 function normalize(value: string) {

@@ -1,7 +1,8 @@
-import { BarChart3, ChefHat, ClipboardList, Package, Plus, Settings, ShoppingBag, Users, Wrench } from "lucide-react";
+import { BarChart3, CalendarDays, ChefHat, ClipboardList, Package, Plus, Settings, ShoppingBag, Users, Wrench } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CustomersPage } from "./pages/CustomersPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { EventsPage } from "./pages/EventsPage";
 import { KitchenPage } from "./pages/KitchenPage";
 import { NewSalePage } from "./pages/NewSalePage";
 import { OperationsPage } from "./pages/OperationsPage";
@@ -14,13 +15,14 @@ import { getCategories, getCustomers, getDashboard, getMeasures, getPaymentMetho
 import { isSupabaseConfigured } from "./lib/supabase";
 import type { Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, RecipeItem, Region, Resource, Sale, Supplier } from "./types";
 
-type Page = "dashboard" | "new-sale" | "self-service" | "kitchen" | "sales" | "registrations" | "operations" | "customers" | "products" | "settings";
+type Page = "dashboard" | "new-sale" | "self-service" | "kitchen" | "events" | "sales" | "registrations" | "operations" | "customers" | "products" | "settings";
 
 const navItems: Array<{ id: Page; label: string; icon: typeof BarChart3 }> = [
   { id: "dashboard", label: "Painel", icon: BarChart3 },
   { id: "new-sale", label: "Nova venda", icon: Plus },
   { id: "self-service", label: "Autoatendimento", icon: ShoppingBag },
   { id: "kitchen", label: "Cozinha", icon: ChefHat },
+  { id: "events", label: "Eventos", icon: CalendarDays },
   { id: "sales", label: "Pedidos", icon: ClipboardList },
   { id: "registrations", label: "Cadastros", icon: Users },
   { id: "operations", label: "Operações", icon: Wrench },
@@ -103,7 +105,8 @@ export function App() {
     }
     if (activePage === "sales") return <SalesPage sales={sales} loading={loading} />;
     if (activePage === "self-service") return <SelfServicePage paymentMethods={paymentMethods} products={products} onSaved={refreshData} />;
-    if (activePage === "kitchen") return <KitchenPage loading={loading} recipeItems={recipeItems} />;
+    if (activePage === "kitchen") return <KitchenPage loading={loading} products={products} recipeItems={recipeItems} />;
+    if (activePage === "events") return <EventsPage products={products} recipeItems={recipeItems} />;
     if (activePage === "registrations") return <RegistrationsPage categories={categories} customers={customers} measures={measures} products={products} regions={regions} resources={resources} onChanged={refreshData} />;
     if (activePage === "operations") return <OperationsPage measures={measures} products={products} resources={resources} suppliers={suppliers} onChanged={refreshData} />;
     if (activePage === "customers") return <CustomersPage customers={customers} loading={loading} />;

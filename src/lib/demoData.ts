@@ -1,11 +1,11 @@
 import type { Customer, DashboardMetrics, PaymentMethod, Product, Sale } from "../types";
 
 export const demoProducts: Product[] = [
-  { id: 1, name: "Brasileirinho", description: null, category: "Pratos Principais", price: 28.5, available: true, weight: 500, measure: "grama" },
-  { id: 2, name: "Macarrao a Bolonhesa de Lentilha", description: null, category: "Pratos Principais", price: 30, available: true, weight: 500, measure: "grama" },
-  { id: 3, name: "Moqueca de Banana da Terra", description: null, category: "Pratos Principais", price: 30, available: true, weight: 500, measure: "grama" },
-  { id: 4, name: "Feijoada Veg", description: null, category: "Pratos Principais", price: 34, available: true, weight: 500, measure: "grama" },
-  { id: 6, name: "Coca-Cola sem acucar 310ml", description: null, category: "Bebidas", price: 5, available: true, weight: 310, measure: "ml" }
+  { id: 1, name: "Brasileirinho", description: null, category: "Pratos Principais", price: 28.5, available: true, weight: 500, measure: "grama", yieldServings: 20 },
+  { id: 2, name: "Macarrao a Bolonhesa de Lentilha", description: null, category: "Pratos Principais", price: 30, available: true, weight: 500, measure: "grama", yieldServings: 20 },
+  { id: 3, name: "Moqueca de Banana da Terra", description: null, category: "Pratos Principais", price: 30, available: true, weight: 500, measure: "grama", yieldServings: 20 },
+  { id: 4, name: "Feijoada Veg", description: null, category: "Pratos Principais", price: 34, available: true, weight: 500, measure: "grama", yieldServings: 20 },
+  { id: 6, name: "Coca-Cola sem acucar 310ml", description: null, category: "Bebidas", price: 5, available: true, weight: 310, measure: "ml", yieldServings: 1 }
 ];
 
 export const demoCustomers: Customer[] = [

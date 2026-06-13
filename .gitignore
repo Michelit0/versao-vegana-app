@@ -3,6 +3,9 @@ dist
 .env
 .env.local
 supabase/seed/*.csv
+supabase/seed/*.local.sql
+backups/
+tmp/
 *.log
 __pycache__/
 *.pyc
