@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { demoCustomers, demoDashboard, demoPaymentMethods, demoProducts, demoSales } from "./demoData";
+import { cleanText } from "./format";
 import type { Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, RecipeItem, Region, Resource, Sale, SaleItemDraft, Supplier } from "../types";
 
 type NewSaleInput = {
@@ -34,6 +35,7 @@ type NewProductInput = {
 };
 
 type NewCustomerInput = {
+  id?: number;
   name: string;
   email?: string | null;
   phone: string;
@@ -45,6 +47,7 @@ type NewCustomerInput = {
 };
 
 type NewSupplierInput = {
+  id?: number;
   name: string;
   phone?: string | null;
   email?: string | null;
@@ -52,6 +55,7 @@ type NewSupplierInput = {
 };
 
 type NewResourceInput = {
+  id?: number;
   type: string;
   name: string;
   categoryId?: number | null;
@@ -111,9 +115,9 @@ function isMissingColumnError(error: unknown) {
 function mapProduct(row: any): Product {
   return {
     id: row.id_produto,
-    name: row.nome_produto,
-    description: row.descricao ?? null,
-    category: row.desc_categoria ?? "Sem categoria",
+    name: cleanText(row.nome_produto),
+    description: cleanText(row.descricao, "") || null,
+    category: cleanText(row.desc_categoria, "Sem categoria"),
     price: Number(row.preco ?? 0),
     available: String(row.disponibilidade ?? "").toLowerCase() !== "nao",
     weight: row.peso,
@@ -170,13 +174,13 @@ export async function getCustomers(): Promise<Customer[]> {
   if (error) throw error;
   return data.map((row: any) => ({
     id: row.id_cliente,
-    name: row.nome_cliente,
+    name: cleanText(row.nome_cliente),
     email: row.email_cliente,
     phone: row.telefone_cliente,
-    address: row.endereco_cliente,
+    address: cleanText(row.endereco_cliente, "") || null,
     regionId: row.id_regiao,
-    region: row.regiao ?? null,
-    dietaryPreferences: row.preferencias_alimentares
+    region: cleanText(row.regiao, "") || null,
+    dietaryPreferences: cleanText(row.preferencias_alimentares, "") || null
   }));
 }
 
@@ -189,10 +193,10 @@ export async function getSuppliers(): Promise<Supplier[]> {
   if (error) throw error;
   return data.map((row: any) => ({
     id: row.id_fornecedor,
-    name: row.nome_fornecedor,
+    name: cleanText(row.nome_fornecedor),
     phone: row.telefone_fornecedor,
     email: row.email_fornecedor,
-    note: row.observacao
+    note: cleanText(row.observacao, "") || null
   }));
 }
 
@@ -205,10 +209,10 @@ export async function getResources(): Promise<Resource[]> {
   if (error) throw error;
   return data.map((row: any) => ({
     id: row.id_recurso,
-    type: row.tipo_recurso,
-    name: row.nome_recurso,
+    type: cleanText(row.tipo_recurso, "") || null,
+    name: cleanText(row.nome_recurso),
     categoryId: row.id_categoria_recurso,
-    category: row.desc_categoria_rec,
+    category: cleanText(row.desc_categoria_rec, "") || null,
     stock: Number(row.qtd_estoque ?? 0),
     unitCost: Number(row.custo_unitario ?? 0),
     measure: row.tipo_medida,
@@ -220,21 +224,21 @@ export async function getRegions(): Promise<Region[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from("regioes").select("id_regiao,regiao,taxa").order("regiao");
   if (error) throw error;
-  return data.map((row: any) => ({ id: row.id_regiao, name: row.regiao, fee: Number(row.taxa ?? 0) }));
+  return data.map((row: any) => ({ id: row.id_regiao, name: cleanText(row.regiao), fee: Number(row.taxa ?? 0) }));
 }
 
 export async function getCategories(): Promise<Category[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from("categorias").select("cod_categoria,categoria,tipo_categoria").order("categoria");
   if (error) throw error;
-  return data.map((row: any) => ({ id: row.cod_categoria, name: row.categoria, type: row.tipo_categoria }));
+  return data.map((row: any) => ({ id: row.cod_categoria, name: cleanText(row.categoria), type: cleanText(row.tipo_categoria) }));
 }
 
 export async function getMeasures(): Promise<Measure[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from("tipos_medida").select("tipo_medida").order("tipo_medida");
   if (error) throw error;
-  return data.map((row: any) => ({ name: row.tipo_medida }));
+  return data.map((row: any) => ({ name: cleanText(row.tipo_medida) }));
 }
 
 function mapRecipeItem(row: any, index: number): RecipeItem {
@@ -242,9 +246,9 @@ function mapRecipeItem(row: any, index: number): RecipeItem {
     id: String(row.id_receita_item ?? `${row.id_receita ?? "receita"}-${row.id_produto ?? "produto"}-${row.id_recurso ?? "recurso"}-${index}`),
     recipeId: row.id_receita ?? null,
     productId: row.id_produto ?? null,
-    productName: row.nome_produto ?? "Produto sem nome",
+    productName: cleanText(row.nome_produto, "Produto sem nome"),
     resourceId: row.id_recurso ?? null,
-    resourceName: row.nome_recurso ?? "Ingrediente sem nome",
+    resourceName: cleanText(row.nome_recurso, "Ingrediente sem nome"),
     quantity: row.qtd_ingrediente === null || row.qtd_ingrediente === undefined ? null : Number(row.qtd_ingrediente),
     measure: row.tipo_medida ?? null,
     preparationOrder: row.ordem_preparo === null || row.ordem_preparo === undefined ? null : Number(row.ordem_preparo)
@@ -287,8 +291,8 @@ export async function getPaymentMethods(): Promise<PaymentMethod[]> {
   if (error) throw error;
   return data.map((row) => ({
     id: row.id_forma_pagamento,
-    name: row.forma_pagamento,
-    brand: row.bandeira,
+    name: cleanText(row.forma_pagamento),
+    brand: cleanText(row.bandeira, "") || null,
     feeRate: Number(row.taxa ?? 0)
   }));
 }
@@ -306,9 +310,9 @@ export async function getSales(): Promise<Sale[]> {
   return data.map((row: any) => ({
     id: row.id_pedido,
     orderedAt: row.data_pedido ?? new Date().toISOString(),
-    customerName: row.nome_cliente ?? "Cliente não informado",
+    customerName: cleanText(row.nome_cliente, "Cliente nao informado"),
     status: row.status_pedido,
-    paymentMethod: row.forma_pagamento ?? "-",
+    paymentMethod: cleanText(row.forma_pagamento, "-"),
     grossAmount: Number(row.valor_total ?? 0),
     finalAmount: Number(row.valor_final ?? 0)
   }));
@@ -341,7 +345,7 @@ export async function getDashboard(): Promise<DashboardMetrics> {
     openOrders: sales.filter((sale) => sale.status === "pendente").length,
     averageTicket: monthSales.length ? monthSales.reduce((sum, sale) => sum + sale.finalAmount, 0) / monthSales.length : 0,
     topProducts: (topProductsData ?? []).map((row: any) => ({
-      name: row.nome_produto ?? "Produto não informado",
+      name: cleanText(row.nome_produto, "Produto nao informado"),
       quantity: Number(row.qtd_vendida ?? 0),
       revenue: Number(row.receita_bruta ?? 0)
     })),
@@ -499,6 +503,21 @@ export async function createCustomer(input: NewCustomerInput) {
   return { id };
 }
 
+export async function updateCustomer(input: NewCustomerInput & { id: number }) {
+  const { error } = await requireSupabase().from("clientes").update({
+    nome_cliente: input.name.trim(),
+    email_cliente: input.email || null,
+    telefone_cliente: input.phone.trim(),
+    endereco_cliente: input.address.trim(),
+    id_regiao: input.regionId ?? null,
+    regiao: input.region ?? null,
+    data_nascimento: input.birthDate || null,
+    preferencias_alimentares: input.dietaryPreferences || null
+  }).eq("id_cliente", input.id);
+  if (error) throw error;
+  return { id: input.id };
+}
+
 export async function createSupplier(input: NewSupplierInput) {
   const client = requireSupabase();
   const id = await nextId("fornecedores", "id_fornecedor");
@@ -512,6 +531,17 @@ export async function createSupplier(input: NewSupplierInput) {
   });
   if (error) throw error;
   return { id };
+}
+
+export async function updateSupplier(input: NewSupplierInput & { id: number }) {
+  const { error } = await requireSupabase().from("fornecedores").update({
+    nome_fornecedor: input.name.trim(),
+    telefone_fornecedor: input.phone || null,
+    email_fornecedor: input.email || null,
+    observacao: input.note || null
+  }).eq("id_fornecedor", input.id);
+  if (error) throw error;
+  return { id: input.id };
 }
 
 export async function createResource(input: NewResourceInput) {
@@ -531,6 +561,21 @@ export async function createResource(input: NewResourceInput) {
   });
   if (error) throw error;
   return { id };
+}
+
+export async function updateResource(input: NewResourceInput & { id: number }) {
+  const { error } = await requireSupabase().from("recursos").update({
+    tipo_recurso: input.type,
+    nome_recurso: input.name.trim(),
+    id_categoria_recurso: input.categoryId ?? null,
+    desc_categoria_rec: input.category ?? null,
+    qtd_estoque: input.stock,
+    custo_unitario: input.unitCost,
+    tipo_medida: input.measure,
+    data_validade: input.expiresAt || null
+  }).eq("id_recurso", input.id);
+  if (error) throw error;
+  return { id: input.id };
 }
 
 export async function createRecipe(input: NewRecipeInput) {
@@ -562,14 +607,25 @@ export async function createRecipe(input: NewRecipeInput) {
 }
 
 export async function updateRecipeItem(input: UpdateRecipeItemInput) {
+  const row = {
+    qtd_ingrediente: input.quantity,
+    tipo_medida: input.measure,
+    ordem_preparo: input.preparationOrder ?? null
+  };
   const { error } = await requireSupabase()
     .from("receitas")
-    .update({
-      qtd_ingrediente: input.quantity,
-      tipo_medida: input.measure,
-      ordem_preparo: input.preparationOrder ?? null
-    })
+    .update(row)
     .eq("id_receita_item", Number(input.id));
+  if (error && isMissingColumnError(error)) {
+    const { ordem_preparo, ...legacyRow } = row;
+    void ordem_preparo;
+    const { error: legacyError } = await requireSupabase()
+      .from("receitas")
+      .update(legacyRow)
+      .eq("id_receita_item", Number(input.id));
+    if (legacyError) throw legacyError;
+    return;
+  }
   if (error) throw error;
 }
 

@@ -1,4 +1,4 @@
-import { Clipboard, MessageCircle, Plus, Trash2 } from "lucide-react";
+import { Clipboard, MessageCircle, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SearchableSelect } from "../components/SearchableSelect";
 import type { Product, RecipeItem } from "../types";
@@ -18,6 +18,10 @@ function formatQuantity(value: number, measure: string | null) {
   return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 }).format(value)}${measure ? ` ${measure}` : ""}`;
 }
 
+function listKey(item: { name: string; measure: string | null }) {
+  return `${item.name}|${item.measure ?? ""}`;
+}
+
 export function EventsPage({ products, recipeItems }: EventsPageProps) {
   const productOptions = products
     .filter((product) => recipeItems.some((item) => item.productId === product.id))
@@ -32,6 +36,7 @@ export function EventsPage({ products, recipeItems }: EventsPageProps) {
     { id: Date.now(), productId: productOptions[0]?.value ?? 0, servings: productOptions[0] ? products.find((item) => item.id === productOptions[0].value)?.yieldServings ?? 20 : 20 }
   ]);
   const [copied, setCopied] = useState(false);
+  const [removedItems, setRemovedItems] = useState<string[]>([]);
 
   const shoppingList = useMemo(() => {
     const totals = new Map<string, { name: string; measure: string | null; quantity: number }>();
@@ -50,8 +55,10 @@ export function EventsPage({ products, recipeItems }: EventsPageProps) {
       }
     }
 
-    return Array.from(totals.values()).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-  }, [products, recipeItems, rows]);
+    return Array.from(totals.values())
+      .filter((item) => !removedItems.includes(listKey(item)))
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  }, [products, recipeItems, removedItems, rows]);
 
   const whatsappText = useMemo(() => {
     const productsText = rows.map((row) => {
@@ -123,18 +130,32 @@ export function EventsPage({ products, recipeItems }: EventsPageProps) {
         <div className="panel">
           <div className="panel-heading">
             <h2>Lista de compras consolidada</h2>
-            <span className="muted-count">{shoppingList.length} itens</span>
+            <div className="panel-actions">
+              <span className="muted-count">{shoppingList.length} itens</span>
+              {removedItems.length ? (
+                <button className="secondary-action compact-action" type="button" onClick={() => setRemovedItems([])}>
+                  <RotateCcw size={15} />
+                  Restaurar removidos
+                </button>
+              ) : null}
+            </div>
           </div>
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>Ingrediente</th><th>Quantidade total</th></tr>
+                <tr><th>Ingrediente</th><th>Quantidade total</th><th>Lista</th></tr>
               </thead>
               <tbody>
                 {shoppingList.map((item) => (
                   <tr key={`${item.name}-${item.measure}`}>
                     <td>{item.name}</td>
                     <td><strong>{formatQuantity(item.quantity, item.measure)}</strong></td>
+                    <td>
+                      <button className="secondary-action compact-action" type="button" onClick={() => setRemovedItems((current) => [...current, listKey(item)])}>
+                        <Trash2 size={15} />
+                        Remover
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

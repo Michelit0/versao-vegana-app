@@ -1,4 +1,4 @@
-import { Edit3, Save, Search, Trash2, X } from "lucide-react";
+import { Edit3, Save, Search, Trash2, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EmptyState } from "../components/EmptyState";
 import { currency } from "../lib/format";
@@ -148,7 +148,7 @@ export function ProductsPage({ products, loading, onChanged }: ProductsPageProps
 
   return (
     <section className="content-stack">
-      <ProductFormPanel title="Novo produto" draft={draft} disabled={saving} onChange={setDraft} onSave={submitProduct} actionLabel="Salvar produto" />
+      {!editing ? <ProductFormPanel title="Novo produto" draft={draft} disabled={saving} onChange={setDraft} onSave={submitProduct} actionLabel="Salvar produto" /> : null}
 
       {editing ? (
         <ProductFormPanel
@@ -217,7 +217,12 @@ function ProductFormPanel({ actionLabel, disabled, draft, onCancel, onChange, on
     <section className="panel">
       <div className="panel-heading">
         <h2>{title}</h2>
-        {onCancel ? <button className="icon-action" type="button" onClick={onCancel}><X size={17} /></button> : null}
+        {onCancel ? (
+          <button className="secondary-action" type="button" onClick={onCancel}>
+            <XCircle size={17} />
+            Descartar alteracoes
+          </button>
+        ) : null}
       </div>
       <div className="form-grid product-form">
         <label>Nome<input value={draft.name} onChange={(event) => onChange({ ...draft, name: event.target.value })} placeholder="Produto de teste" /></label>

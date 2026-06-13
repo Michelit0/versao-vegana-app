@@ -87,7 +87,7 @@ export function App() {
   }, []);
 
   const page = useMemo(() => {
-    if (activePage === "dashboard") return <DashboardPage dashboard={dashboard} loading={loading} />;
+    if (activePage === "dashboard") return <DashboardPage customersCount={customers.length} dashboard={dashboard} loading={loading} productsCount={products.length} recipeItemsCount={recipeItems.length} resourcesCount={resources.length} />;
     if (activePage === "new-sale") {
       return (
         <NewSalePage
@@ -107,7 +107,7 @@ export function App() {
     if (activePage === "self-service") return <SelfServicePage paymentMethods={paymentMethods} products={products} onSaved={refreshData} />;
     if (activePage === "kitchen") return <KitchenPage loading={loading} products={products} recipeItems={recipeItems} />;
     if (activePage === "events") return <EventsPage products={products} recipeItems={recipeItems} />;
-    if (activePage === "registrations") return <RegistrationsPage categories={categories} customers={customers} measures={measures} products={products} regions={regions} resources={resources} onChanged={refreshData} />;
+    if (activePage === "registrations") return <RegistrationsPage categories={categories} customers={customers} measures={measures} products={products} recipeItems={recipeItems} regions={regions} resources={resources} suppliers={suppliers} onChanged={refreshData} />;
     if (activePage === "operations") return <OperationsPage measures={measures} products={products} resources={resources} suppliers={suppliers} onChanged={refreshData} />;
     if (activePage === "customers") return <CustomersPage customers={customers} loading={loading} />;
     if (activePage === "products") return <ProductsPage products={products} loading={loading} onChanged={refreshData} />;

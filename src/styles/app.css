@@ -270,6 +270,39 @@ h2 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.today-panel {
+  align-items: center;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1fr);
+}
+
+.ops-summary-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ops-summary-grid div {
+  background: #fbf8f2;
+  border: 1px solid #eadfd2;
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  min-height: 72px;
+  padding: 12px;
+}
+
+.ops-summary-grid strong {
+  color: #5b0f20;
+  font-size: 1.35rem;
+}
+
+.ops-summary-grid span {
+  color: #7f685e;
+  font-size: 0.86rem;
+}
+
 .kpi-card,
 .panel,
 .entity-card,
@@ -323,6 +356,14 @@ h2 {
 .panel-heading .primary-action,
 .panel-heading .icon-action {
   flex: 0 0 auto;
+}
+
+.panel-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .muted-count {
@@ -490,6 +531,30 @@ th {
 .management-form {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   margin-bottom: 14px;
+}
+
+.edit-panel {
+  border-color: #dbc7b3;
+}
+
+.recipe-edit-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.recipe-edit-row {
+  align-items: end;
+  border: 1px solid #eadfd2;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(96px, 0.35fr) minmax(130px, 0.45fr) minmax(96px, 0.35fr) auto;
+  padding: 12px;
+}
+
+.recipe-edit-row strong {
+  align-self: center;
 }
 
 .form-action {
@@ -1154,6 +1219,9 @@ select {
   .split-layout,
   .form-grid,
   .product-form,
+  .today-panel,
+  .ops-summary-grid,
+  .recipe-edit-row,
   .kitchen-control-grid,
   .event-product-row,
   .checkout-bar,

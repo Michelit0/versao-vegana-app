@@ -43,7 +43,8 @@ const tables = [
 ];
 
 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-const outputDir = path.resolve("backups", stamp);
+const backupRoot = process.env.BACKUP_DIR || "backups";
+const outputDir = path.resolve(backupRoot, stamp);
 await fs.mkdir(outputDir, { recursive: true });
 
 for (const table of tables) {

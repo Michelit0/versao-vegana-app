@@ -4,16 +4,34 @@ import { currency, parseLocalDate } from "../lib/format";
 import type { DashboardMetrics } from "../types";
 
 type DashboardPageProps = {
+  customersCount: number;
   dashboard: DashboardMetrics | null;
   loading: boolean;
+  productsCount: number;
+  recipeItemsCount: number;
+  resourcesCount: number;
 };
 
-export function DashboardPage({ dashboard, loading }: DashboardPageProps) {
+export function DashboardPage({ customersCount, dashboard, loading, productsCount, recipeItemsCount, resourcesCount }: DashboardPageProps) {
   if (loading) return <EmptyState title="Carregando painel" description="Buscando vendas, produtos e resumo financeiro." />;
   if (!dashboard) return <EmptyState title="Sem dados" description="Ainda não há informações para montar o painel." />;
 
+  const today = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", weekday: "long" }).format(new Date());
+
   return (
     <section className="content-stack">
+      <section className="panel today-panel">
+        <div>
+          <span className="eyebrow">Hoje</span>
+          <h2>{today}</h2>
+        </div>
+        <div className="ops-summary-grid">
+          <div><strong>{customersCount}</strong><span>clientes cadastrados</span></div>
+          <div><strong>{productsCount}</strong><span>produtos no cardapio</span></div>
+          <div><strong>{resourcesCount}</strong><span>recursos/ingredientes</span></div>
+          <div><strong>{recipeItemsCount}</strong><span>itens de receita</span></div>
+        </div>
+      </section>
       <div className="kpi-grid">
         <KpiCard label="Vendas hoje" value={currency.format(dashboard.revenueToday)} detail="Pedidos não cancelados" />
         <KpiCard label="Vendas no mês" value={currency.format(dashboard.revenueMonth)} detail="Base operacional" />
