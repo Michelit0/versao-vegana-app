@@ -518,6 +518,11 @@ export async function updateCustomer(input: NewCustomerInput & { id: number }) {
   return { id: input.id };
 }
 
+export async function deleteCustomer(customerId: number) {
+  const { error } = await requireSupabase().from("clientes").delete().eq("id_cliente", customerId);
+  if (error) throw error;
+}
+
 export async function createSupplier(input: NewSupplierInput) {
   const client = requireSupabase();
   const id = await nextId("fornecedores", "id_fornecedor");
@@ -542,6 +547,11 @@ export async function updateSupplier(input: NewSupplierInput & { id: number }) {
   }).eq("id_fornecedor", input.id);
   if (error) throw error;
   return { id: input.id };
+}
+
+export async function deleteSupplier(supplierId: number) {
+  const { error } = await requireSupabase().from("fornecedores").delete().eq("id_fornecedor", supplierId);
+  if (error) throw error;
 }
 
 export async function createResource(input: NewResourceInput) {
@@ -576,6 +586,11 @@ export async function updateResource(input: NewResourceInput & { id: number }) {
   }).eq("id_recurso", input.id);
   if (error) throw error;
   return { id: input.id };
+}
+
+export async function deleteResource(resourceId: number) {
+  const { error } = await requireSupabase().from("recursos").delete().eq("id_recurso", resourceId);
+  if (error) throw error;
 }
 
 export async function createRecipe(input: NewRecipeInput) {
@@ -626,6 +641,11 @@ export async function updateRecipeItem(input: UpdateRecipeItemInput) {
     if (legacyError) throw legacyError;
     return;
   }
+  if (error) throw error;
+}
+
+export async function deleteRecipeItem(recipeItemId: string) {
+  const { error } = await requireSupabase().from("receitas").delete().eq("id_receita_item", Number(recipeItemId));
   if (error) throw error;
 }
 

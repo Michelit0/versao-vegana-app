@@ -1,12 +1,10 @@
-import { BarChart3, CalendarDays, ChefHat, ClipboardList, LayoutDashboard, Package, Plus, Settings, ShoppingBag, Users, Wrench } from "lucide-react";
+import { BarChart3, CalendarDays, ChefHat, ClipboardList, LayoutDashboard, Plus, Settings, ShoppingBag, Users, Wrench } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { CustomersPage } from "./pages/CustomersPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { EventsPage } from "./pages/EventsPage";
 import { KitchenPage } from "./pages/KitchenPage";
 import { NewSalePage } from "./pages/NewSalePage";
 import { OperationsPage } from "./pages/OperationsPage";
-import { ProductsPage } from "./pages/ProductsPage";
 import { PowerBiDashboardPage } from "./pages/PowerBiDashboardPage";
 import { RegistrationsPage } from "./pages/RegistrationsPage";
 import { SalesPage } from "./pages/SalesPage";
@@ -16,7 +14,7 @@ import { getCategories, getCustomers, getDashboard, getMeasures, getPaymentMetho
 import { isSupabaseConfigured } from "./lib/supabase";
 import type { Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, RecipeItem, Region, Resource, Sale, Supplier } from "./types";
 
-type Page = "dashboard" | "bi-dashboard" | "new-sale" | "self-service" | "kitchen" | "events" | "sales" | "registrations" | "operations" | "customers" | "products" | "settings";
+type Page = "dashboard" | "bi-dashboard" | "new-sale" | "self-service" | "kitchen" | "events" | "sales" | "registrations" | "operations" | "settings";
 
 const navItems: Array<{ id: Page; label: string; icon: typeof BarChart3 }> = [
   { id: "dashboard", label: "Painel", icon: BarChart3 },
@@ -28,8 +26,6 @@ const navItems: Array<{ id: Page; label: string; icon: typeof BarChart3 }> = [
   { id: "sales", label: "Pedidos", icon: ClipboardList },
   { id: "registrations", label: "Cadastros", icon: Users },
   { id: "operations", label: "Operações", icon: Wrench },
-  { id: "customers", label: "Clientes", icon: Users },
-  { id: "products", label: "Produtos", icon: Package },
   { id: "settings", label: "Sistema", icon: Settings }
 ];
 
@@ -112,8 +108,6 @@ export function App() {
     if (activePage === "events") return <EventsPage products={products} recipeItems={recipeItems} />;
     if (activePage === "registrations") return <RegistrationsPage categories={categories} customers={customers} measures={measures} products={products} recipeItems={recipeItems} regions={regions} resources={resources} suppliers={suppliers} onChanged={refreshData} />;
     if (activePage === "operations") return <OperationsPage measures={measures} products={products} resources={resources} suppliers={suppliers} onChanged={refreshData} />;
-    if (activePage === "customers") return <CustomersPage customers={customers} loading={loading} />;
-    if (activePage === "products") return <ProductsPage products={products} loading={loading} onChanged={refreshData} />;
     return <SettingsPage supabaseReady={isSupabaseConfigured} onRefresh={refreshData} />;
   }, [activePage, categories, customers, dashboard, loading, measures, paymentMethods, products, recipeItems, regions, resources, sales, suppliers]);
 
