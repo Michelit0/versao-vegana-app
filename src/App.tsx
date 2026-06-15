@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, ChefHat, ClipboardList, Package, Plus, Settings, ShoppingBag, Users, Wrench } from "lucide-react";
+import { BarChart3, CalendarDays, ChefHat, ClipboardList, LayoutDashboard, Package, Plus, Settings, ShoppingBag, Users, Wrench } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CustomersPage } from "./pages/CustomersPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -7,6 +7,7 @@ import { KitchenPage } from "./pages/KitchenPage";
 import { NewSalePage } from "./pages/NewSalePage";
 import { OperationsPage } from "./pages/OperationsPage";
 import { ProductsPage } from "./pages/ProductsPage";
+import { PowerBiDashboardPage } from "./pages/PowerBiDashboardPage";
 import { RegistrationsPage } from "./pages/RegistrationsPage";
 import { SalesPage } from "./pages/SalesPage";
 import { SelfServicePage } from "./pages/SelfServicePage";
@@ -15,10 +16,11 @@ import { getCategories, getCustomers, getDashboard, getMeasures, getPaymentMetho
 import { isSupabaseConfigured } from "./lib/supabase";
 import type { Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, RecipeItem, Region, Resource, Sale, Supplier } from "./types";
 
-type Page = "dashboard" | "new-sale" | "self-service" | "kitchen" | "events" | "sales" | "registrations" | "operations" | "customers" | "products" | "settings";
+type Page = "dashboard" | "bi-dashboard" | "new-sale" | "self-service" | "kitchen" | "events" | "sales" | "registrations" | "operations" | "customers" | "products" | "settings";
 
 const navItems: Array<{ id: Page; label: string; icon: typeof BarChart3 }> = [
   { id: "dashboard", label: "Painel", icon: BarChart3 },
+  { id: "bi-dashboard", label: "Dashboard BI", icon: LayoutDashboard },
   { id: "new-sale", label: "Nova venda", icon: Plus },
   { id: "self-service", label: "Autoatendimento", icon: ShoppingBag },
   { id: "kitchen", label: "Cozinha", icon: ChefHat },
@@ -88,6 +90,7 @@ export function App() {
 
   const page = useMemo(() => {
     if (activePage === "dashboard") return <DashboardPage customersCount={customers.length} dashboard={dashboard} loading={loading} productsCount={products.length} recipeItemsCount={recipeItems.length} resourcesCount={resources.length} />;
+    if (activePage === "bi-dashboard") return <PowerBiDashboardPage />;
     if (activePage === "new-sale") {
       return (
         <NewSalePage
