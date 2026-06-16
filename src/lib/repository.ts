@@ -480,6 +480,7 @@ export async function getRecipeItems(): Promise<RecipeItem[]> {
   const { data, error } = await supabase
     .from("receitas")
     .select("id_receita_item,id_receita,id_produto,nome_produto,id_recurso,nome_recurso,qtd_ingrediente,tipo_medida,ordem_preparo")
+    .or("ativo.is.null,ativo.eq.true")
     .not("id_produto", "is", null)
     .order("id_produto")
     .order("id_receita_item");
