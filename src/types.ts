@@ -79,6 +79,20 @@ export type Resource = {
   expiresAt: string | null;
 };
 
+export type PurchaseQuote = {
+  resourceId: number;
+  supplierId: number;
+  supplierName: string;
+  lastPurchaseDate: string | null;
+  lastUnitCost: number;
+  averageUnitCost: number;
+  minimumUnitCost: number;
+  maximumUnitCost: number;
+  purchaseCount: number;
+  lastQuantity: number;
+  lastMeasure: string | null;
+};
+
 export type Region = {
   id: number;
   name: string;

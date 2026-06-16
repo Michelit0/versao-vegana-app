@@ -418,6 +418,83 @@ h2 { font-size: 1.1rem; font-weight: 700; }
   font-size: 0.85rem;
 }
 
+.purchase-layout {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+}
+
+.purchase-intelligence-panel {
+  position: sticky;
+  top: 24px;
+}
+
+.purchase-price-alert {
+  background: #fff7e5;
+  border: 1px solid #f2cf8f;
+  border-radius: 12px;
+  color: #7b4d00;
+  font-weight: 800;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+}
+
+.purchase-summary-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+  margin-bottom: 14px;
+}
+
+.purchase-summary-grid div {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: 12px;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.purchase-summary-grid span,
+.purchase-summary-grid small,
+.purchase-quote-card span,
+.purchase-quote-card small {
+  color: var(--vv-text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.purchase-summary-grid strong {
+  color: var(--vv-wine-800);
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.purchase-quote-list {
+  display: grid;
+  gap: 10px;
+}
+
+.purchase-quote-card {
+  border: 1px solid var(--vv-border);
+  border-radius: 12px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.purchase-quote-card strong,
+.purchase-quote-card span {
+  display: block;
+}
+
+.purchase-quote-card > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* Cartões base */
 .kpi-card,
 .panel,
@@ -1631,6 +1708,7 @@ textarea:focus {
   .kitchen-control-grid,
   .event-product-row,
   .checkout-bar,
+  .purchase-layout,
   .self-service-layout {
     grid-template-columns: 1fr;
   }
@@ -1655,6 +1733,10 @@ textarea:focus {
   .checkout-panel {
     max-height: none;
     overflow: visible;
+    position: static;
+  }
+
+  .purchase-intelligence-panel {
     position: static;
   }
 

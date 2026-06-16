@@ -29,6 +29,8 @@ const navItems: Array<{ id: Page; label: string; icon: typeof BarChart3 }> = [
   { id: "settings", label: "Sistema", icon: Settings }
 ];
 
+const pagesWithNewSaleShortcut = new Set<Page>(["dashboard", "sales"]);
+
 export function App() {
   const [activePage, setActivePage] = useState<Page>("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
@@ -148,7 +150,7 @@ export function App() {
             <p className="eyebrow">Operacao interna</p>
             <h1>{navItems.find((item) => item.id === activePage)?.label}</h1>
           </div>
-          {activePage !== "new-sale" ? (
+          {pagesWithNewSaleShortcut.has(activePage) ? (
             <button className="primary-action" type="button" onClick={() => setActivePage("new-sale")}>
               <Plus size={18} />
               Nova venda

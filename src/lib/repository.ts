@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 import { demoCustomers, demoDashboard, demoPaymentMethods, demoProducts, demoSales } from "./demoData";
 import { cleanText } from "./format";
-import type { Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, RecipeItem, Region, Resource, Sale, SaleItemDraft, Supplier } from "../types";
+import type { Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, PurchaseQuote, RecipeItem, Region, Resource, Sale, SaleItemDraft, Supplier } from "../types";
 
 type NewSaleInput = {
   customerId?: number | null;
@@ -299,6 +299,31 @@ export async function getPaymentMethods(): Promise<PaymentMethod[]> {
     name: cleanText(row.forma_pagamento),
     brand: cleanText(row.bandeira, "") || null,
     feeRate: Number(row.taxa ?? 0)
+  }));
+}
+
+export async function getPurchaseQuotes(resourceId: number): Promise<PurchaseQuote[]> {
+  if (!supabase || !resourceId) return [];
+
+  const { data, error } = await supabase
+    .from("vw_cotacao_recursos_fornecedores")
+    .select("id_recurso,id_fornecedor,nome_fornecedor,data_ultima_compra,ultimo_custo_unitario,custo_unitario_medio,custo_unitario_minimo,custo_unitario_maximo,qtd_compras,ultima_qtd_comprada,ultima_tipo_medida")
+    .eq("id_recurso", resourceId)
+    .order("ultimo_custo_unitario", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map((row: any) => ({
+    resourceId: Number(row.id_recurso),
+    supplierId: Number(row.id_fornecedor),
+    supplierName: cleanText(row.nome_fornecedor, "Fornecedor nao informado"),
+    lastPurchaseDate: row.data_ultima_compra ?? null,
+    lastUnitCost: Number(row.ultimo_custo_unitario ?? 0),
+    averageUnitCost: Number(row.custo_unitario_medio ?? 0),
+    minimumUnitCost: Number(row.custo_unitario_minimo ?? 0),
+    maximumUnitCost: Number(row.custo_unitario_maximo ?? 0),
+    purchaseCount: Number(row.qtd_compras ?? 0),
+    lastQuantity: Number(row.ultima_qtd_comprada ?? 0),
+    lastMeasure: row.ultima_tipo_medida ?? null
   }));
 }
 
