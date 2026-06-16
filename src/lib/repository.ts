@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 import { demoActivities, demoActivityResponsibles, demoActivitySubtasks, demoActivitySummary, demoCustomers, demoDashboard, demoPaymentMethods, demoProducts, demoSales } from "./demoData";
 import { cleanText } from "./format";
-import type { Activity, ActivityPriority, ActivityResponsible, ActivityStatus, ActivitySubtask, ActivitySubtaskStatus, ActivitySummary, Category, Customer, DashboardMetrics, Measure, OrderStatus, PaymentMethod, Product, PurchaseQuote, RecipeItem, Region, Resource, Sale, SaleDeliveryType, SaleItemDraft, SalePaymentStatus, Supplier } from "../types";
+import type { Activity, ActivityPriority, ActivityResponsible, ActivityStatus, ActivitySubtask, ActivitySubtaskStatus, ActivitySummary, AllowedUser, Category, Customer, DashboardMetrics, Measure, OrderStatus, PaymentMethod, Product, PurchaseQuote, RecipeItem, Region, Resource, Sale, SaleDeliveryType, SaleItemDraft, SalePaymentStatus, Supplier, UserProfile, UserRole } from "../types";
 
 type NewSaleInput = {
   customerId?: number | null;
@@ -17,6 +17,13 @@ type NewSaleInput = {
   status?: "rascunho" | "pendente" | "finalizado" | "cancelado";
   serviceStatus?: "nao_iniciado" | "em_producao" | "pronto" | "entregue" | "retirado" | "cancelado";
   note?: string | null;
+};
+
+type AllowedUserInput = {
+  name: string;
+  email: string;
+  role: UserRole;
+  active: boolean;
 };
 
 type NewProductInput = {
@@ -162,6 +169,73 @@ function readLocal<T>(key: string, fallback: T): T {
 
 function writeLocal<T>(key: string, value: T) {
   if (canUseLocalStorage()) window.localStorage.setItem(key, JSON.stringify(value));
+}
+
+export async function getCurrentProfile(): Promise<UserProfile | null> {
+  if (!supabase) return { id: "demo", name: "Administrador Demo", role: "admin", active: true };
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) return null;
+
+  const { data, error } = await supabase
+    .from("perfis")
+    .select("id_usuario,nome_completo,perfil,ativo")
+    .eq("id_usuario", userData.user.id)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    id: data.id_usuario,
+    name: cleanText(data.nome_completo, userData.user.email ?? "Usuario"),
+    role: normalizeUserRole(data.perfil),
+    active: Boolean(data.ativo)
+  };
+}
+
+export async function getAllowedUsers(): Promise<AllowedUser[]> {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("usuarios_permitidos")
+    .select("id_usuario_permitido,email,nome_completo,perfil,ativo,criado_em,atualizado_em")
+    .order("nome_completo", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map((row: any) => ({
+    id: Number(row.id_usuario_permitido),
+    name: cleanText(row.nome_completo, "Usuario"),
+    email: cleanText(row.email, ""),
+    role: normalizeUserRole(row.perfil),
+    active: Boolean(row.ativo),
+    createdAt: row.criado_em ?? new Date().toISOString(),
+    updatedAt: row.atualizado_em ?? new Date().toISOString()
+  }));
+}
+
+export async function createAllowedUser(input: AllowedUserInput): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client.from("usuarios_permitidos").insert({
+    nome_completo: input.name.trim(),
+    email: input.email.trim().toLowerCase(),
+    perfil: input.role,
+    ativo: input.active
+  });
+  if (error) throw error;
+}
+
+export async function updateAllowedUser(input: AllowedUserInput & { id: number }): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client
+    .from("usuarios_permitidos")
+    .update({
+      nome_completo: input.name.trim(),
+      email: input.email.trim().toLowerCase(),
+      perfil: input.role,
+      ativo: input.active
+    })
+    .eq("id_usuario_permitido", input.id);
+  if (error) throw error;
 }
 
 function ensurePendingResponsible(items: ActivityResponsible[]) {
@@ -1427,4 +1501,11 @@ export async function createSale(input: NewSaleInput): Promise<{ id: number }> {
 
 function normalizePaymentStatus(value: unknown): SalePaymentStatus {
   return value === "pendente" || value === "pagar_na_retirada" || value === "pago" ? value : "pago";
+}
+
+function normalizeUserRole(value: unknown): UserRole {
+  if (value === "admin" || value === "socia" || value === "operacao" || value === "cozinha" || value === "consulta" || value === "autoatendimento") {
+    return value;
+  }
+  return "consulta";
 }

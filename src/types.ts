@@ -200,3 +200,22 @@ export type ActivitySummary = {
   highPriority: number;
   completedThisWeek: number;
 };
+
+export type UserRole = "admin" | "socia" | "operacao" | "cozinha" | "consulta" | "autoatendimento";
+
+export type UserProfile = {
+  id: string;
+  name: string;
+  role: UserRole;
+  active: boolean;
+};
+
+export type AllowedUser = {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};

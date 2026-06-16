@@ -1,5 +1,16 @@
 {
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/sistema",
+      "permanent": false
+    }
+  ],
   "rewrites": [
+    {
+      "source": "/sistema/:path*",
+      "destination": "/index.html"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
