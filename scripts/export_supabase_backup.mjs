@@ -39,7 +39,12 @@ const tables = [
   "itens_pedido",
   "compras",
   "producoes",
-  "funcionarios"
+  "funcionarios",
+  "atividades",
+  "historico_atividades",
+  "responsaveis_atividades",
+  "subtarefas_atividades",
+  "historico_subtarefas_atividades"
 ];
 
 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -50,12 +55,19 @@ await fs.mkdir(outputDir, { recursive: true });
 for (const table of tables) {
   const rows = [];
   const pageSize = 1000;
+  let skipped = false;
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase.from(table).select("*").range(from, from + pageSize - 1);
+    if (error && /Could not find the table|schema cache|does not exist/i.test(error.message)) {
+      console.warn(`${table}: tabela ainda nao existe neste ambiente, pulando.`);
+      skipped = true;
+      break;
+    }
     if (error) throw new Error(`${table}: ${error.message}`);
     rows.push(...(data ?? []));
     if (!data || data.length < pageSize) break;
   }
+  if (skipped) continue;
   await fs.writeFile(path.join(outputDir, `${table}.json`), JSON.stringify(rows, null, 2), "utf8");
   console.log(`${table}: ${rows.length}`);
 }

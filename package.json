@@ -11,7 +11,10 @@
     "import:xlsx": "python scripts/import_xlsx_to_seed.py",
     "import:production:xlsx": "python scripts/generate_production_import_sql.py",
     "db:apply": "node scripts/apply_sql.mjs",
-    "backup:supabase": "node scripts/export_supabase_backup.mjs"
+    "backup:code": "node scripts/create_code_backup.mjs",
+    "backup:supabase": "node scripts/export_supabase_backup.mjs",
+    "backup:all": "npm run backup:code && npm run backup:supabase",
+    "protect:check": "npm run typecheck && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
