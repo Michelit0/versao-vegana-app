@@ -11,9 +11,9 @@ import { RegistrationsPage } from "./pages/RegistrationsPage";
 import { SalesPage } from "./pages/SalesPage";
 import { SelfServicePage } from "./pages/SelfServicePage";
 import { SettingsPage } from "./pages/SettingsPage";
-import { getActivities, getActivitySummary, getCategories, getCustomers, getDashboard, getMeasures, getPaymentMethods, getProducts, getRecipeItems, getRegions, getResources, getSales, getSuppliers } from "./lib/repository";
+import { getActivities, getActivityResponsibles, getActivitySubtasks, getActivitySummary, getCategories, getCustomers, getDashboard, getMeasures, getPaymentMethods, getProducts, getRecipeItems, getRegions, getResources, getSales, getSuppliers } from "./lib/repository";
 import { isSupabaseConfigured } from "./lib/supabase";
-import type { Activity, ActivitySummary, Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, RecipeItem, Region, Resource, Sale, Supplier } from "./types";
+import type { Activity, ActivityResponsible, ActivitySubtask, ActivitySummary, Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, RecipeItem, Region, Resource, Sale, Supplier } from "./types";
 
 type Page = "dashboard" | "bi-dashboard" | "new-sale" | "self-service" | "kitchen" | "events" | "planner" | "sales" | "registrations" | "operations" | "settings";
 
@@ -45,6 +45,8 @@ export function App() {
   const [measures, setMeasures] = useState<Measure[]>([]);
   const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [activityResponsibles, setActivityResponsibles] = useState<ActivityResponsible[]>([]);
+  const [activitySubtasks, setActivitySubtasks] = useState<ActivitySubtask[]>([]);
   const [activitySummary, setActivitySummary] = useState<ActivitySummary | null>(null);
   const [sales, setSales] = useState<Sale[]>([]);
   const [dashboard, setDashboard] = useState<DashboardMetrics | null>(null);
@@ -55,7 +57,7 @@ export function App() {
     setLoading(true);
     setError(null);
     try {
-      const [loadedProducts, loadedCustomers, loadedPayments, loadedSales, loadedDashboard, loadedSuppliers, loadedResources, loadedRegions, loadedCategories, loadedMeasures, loadedRecipeItems, loadedActivities, loadedActivitySummary] = await Promise.all([
+      const [loadedProducts, loadedCustomers, loadedPayments, loadedSales, loadedDashboard, loadedSuppliers, loadedResources, loadedRegions, loadedCategories, loadedMeasures, loadedRecipeItems, loadedActivities, loadedActivityResponsibles, loadedActivitySubtasks, loadedActivitySummary] = await Promise.all([
         getProducts(),
         getCustomers(),
         getPaymentMethods(),
@@ -68,6 +70,8 @@ export function App() {
         getMeasures(),
         getRecipeItems(),
         getActivities(),
+        getActivityResponsibles(),
+        getActivitySubtasks(),
         getActivitySummary()
       ]);
       setProducts(loadedProducts);
@@ -82,6 +86,8 @@ export function App() {
       setMeasures(loadedMeasures);
       setRecipeItems(loadedRecipeItems);
       setActivities(loadedActivities);
+      setActivityResponsibles(loadedActivityResponsibles);
+      setActivitySubtasks(loadedActivitySubtasks);
       setActivitySummary(loadedActivitySummary);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível carregar os dados.");
@@ -116,11 +122,11 @@ export function App() {
     if (activePage === "self-service") return <SelfServicePage paymentMethods={paymentMethods} products={products} onSaved={refreshData} />;
     if (activePage === "kitchen") return <KitchenPage loading={loading} products={products} recipeItems={recipeItems} />;
     if (activePage === "events") return <EventsPage products={products} recipeItems={recipeItems} />;
-    if (activePage === "planner") return <PlannerPage activities={activities} loading={loading} onChanged={refreshData} />;
+    if (activePage === "planner") return <PlannerPage activities={activities} loading={loading} responsibles={activityResponsibles} subtasks={activitySubtasks} onChanged={refreshData} />;
     if (activePage === "registrations") return <RegistrationsPage categories={categories} customers={customers} measures={measures} products={products} recipeItems={recipeItems} regions={regions} resources={resources} suppliers={suppliers} onChanged={refreshData} />;
     if (activePage === "operations") return <OperationsPage measures={measures} products={products} resources={resources} suppliers={suppliers} onChanged={refreshData} />;
     return <SettingsPage supabaseReady={isSupabaseConfigured} onRefresh={refreshData} />;
-  }, [activePage, activities, activitySummary, categories, customers, dashboard, loading, measures, paymentMethods, products, recipeItems, regions, resources, sales, suppliers]);
+  }, [activePage, activities, activityResponsibles, activitySubtasks, activitySummary, categories, customers, dashboard, loading, measures, paymentMethods, products, recipeItems, regions, resources, sales, suppliers]);
 
   return (
     <div className="app-shell">

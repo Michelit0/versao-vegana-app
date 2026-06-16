@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
-import { demoActivities, demoActivitySummary, demoCustomers, demoDashboard, demoPaymentMethods, demoProducts, demoSales } from "./demoData";
+import { demoActivities, demoActivityResponsibles, demoActivitySubtasks, demoActivitySummary, demoCustomers, demoDashboard, demoPaymentMethods, demoProducts, demoSales } from "./demoData";
 import { cleanText } from "./format";
-import type { Activity, ActivityPriority, ActivityStatus, ActivitySummary, Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, PurchaseQuote, RecipeItem, Region, Resource, Sale, SaleItemDraft, Supplier } from "../types";
+import type { Activity, ActivityPriority, ActivityResponsible, ActivityStatus, ActivitySubtask, ActivitySubtaskStatus, ActivitySummary, Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, PurchaseQuote, RecipeItem, Region, Resource, Sale, SaleItemDraft, Supplier } from "../types";
 
 type NewSaleInput = {
   customerId?: number | null;
@@ -107,6 +107,7 @@ type ActivityInput = {
   description?: string | null;
   status: ActivityStatus;
   priority: ActivityPriority;
+  ownerId?: number | null;
   owner?: string | null;
   category?: string | null;
   startDate?: string | null;
@@ -114,6 +115,19 @@ type ActivityInput = {
   note?: string | null;
   boardOrder?: number;
   createdBy?: string | null;
+};
+
+type ActivitySubtaskInput = {
+  id?: number;
+  activityId: number;
+  title: string;
+  description?: string | null;
+  status: ActivitySubtaskStatus;
+  priority: ActivityPriority;
+  ownerId?: number | null;
+  owner?: string | null;
+  dueDate?: string | null;
+  order?: number;
 };
 
 function requireSupabase() {
@@ -126,7 +140,32 @@ function requireSupabase() {
 function isMissingColumnError(error: unknown) {
   if (!error || typeof error !== "object") return false;
   const candidate = error as { code?: string; message?: string };
-  return candidate.code === "42703" || candidate.code === "PGRST204" || /column|schema cache/i.test(candidate.message ?? "");
+  return ["42703", "42P01", "PGRST204", "PGRST205"].includes(candidate.code ?? "") || /column|schema cache|relation|table/i.test(candidate.message ?? "");
+}
+
+function canUseLocalStorage() {
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
+
+function readLocal<T>(key: string, fallback: T): T {
+  if (!canUseLocalStorage()) return fallback;
+  const raw = window.localStorage.getItem(key);
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeLocal<T>(key: string, value: T) {
+  if (canUseLocalStorage()) window.localStorage.setItem(key, JSON.stringify(value));
+}
+
+function ensurePendingResponsible(items: ActivityResponsible[]) {
+  const active = items.filter((item) => item.active !== false);
+  if (active.some((item) => item.fullName.toLowerCase() === "pendente atribuicao")) return active;
+  return [demoActivityResponsibles[0], ...active];
 }
 
 function mapProduct(row: any): Product {
@@ -150,11 +189,13 @@ function mapProduct(row: any): Product {
 function mapActivity(row: any): Activity {
   return {
     id: Number(row.id_atividade),
+    ownerId: row.id_responsavel === null || row.id_responsavel === undefined ? null : Number(row.id_responsavel),
     title: cleanText(row.titulo),
     description: cleanText(row.descricao, "") || null,
-    status: row.status,
+    status: fromDatabaseActivityStatus(row.status),
     priority: row.prioridade,
     owner: cleanText(row.responsavel, "") || null,
+    assignedAt: row.data_atribuicao ?? null,
     category: cleanText(row.categoria, "") || null,
     startDate: row.data_inicio ?? null,
     dueDate: row.prazo ?? null,
@@ -166,6 +207,65 @@ function mapActivity(row: any): Activity {
     createdAt: row.data_criacao,
     updatedAt: row.atualizado_em
   };
+}
+
+function mapActivityResponsible(row: any): ActivityResponsible {
+  const firstName = cleanText(row.nome ?? row.firstName ?? "");
+  const lastName = cleanText(row.sobrenome ?? row.lastName ?? "");
+  return {
+    id: Number(row.id_responsavel ?? row.id),
+    firstName,
+    lastName,
+    fullName: cleanText(row.nome_completo ?? row.fullName ?? `${firstName} ${lastName}`.trim()),
+    active: row.ativo !== false && row.active !== false
+  };
+}
+
+function mapActivitySubtask(row: any): ActivitySubtask {
+  return {
+    id: Number(row.id_subtarefa ?? row.id),
+    activityId: Number(row.id_atividade ?? row.activityId),
+    title: cleanText(row.titulo ?? row.title),
+    description: cleanText(row.descricao ?? row.description, "") || null,
+    status: row.status ?? "a_fazer",
+    priority: row.prioridade ?? row.priority ?? "media",
+    ownerId: row.id_responsavel ?? row.ownerId ?? null,
+    owner: cleanText(row.responsavel ?? row.owner, "") || null,
+    dueDate: row.prazo ?? row.dueDate ?? null,
+    assignedAt: row.data_atribuicao ?? row.assignedAt ?? null,
+    completedAt: row.data_conclusao ?? row.completedAt ?? null,
+    active: row.ativo !== false && row.active !== false,
+    order: Number(row.ordem ?? row.order ?? 0),
+    createdAt: row.data_criacao ?? row.createdAt ?? new Date().toISOString(),
+    updatedAt: row.atualizado_em ?? row.updatedAt ?? new Date().toISOString()
+  };
+}
+
+function fromDatabaseActivityStatus(status: string): ActivityStatus {
+  const statusMap: Record<string, ActivityStatus> = {
+    backlog: "a_fazer",
+    a_fazer: "a_fazer",
+    em_andamento: "fazendo",
+    fazendo: "fazendo",
+    homologacao: "impedido",
+    impedido: "impedido",
+    producao: "aguardando_resposta",
+    aguardando_resposta: "aguardando_resposta",
+    finalizado: "concluido",
+    concluido: "concluido"
+  };
+  return statusMap[status] ?? "a_fazer";
+}
+
+function toDatabaseActivityStatus(status: ActivityStatus) {
+  const statusMap: Record<ActivityStatus, string> = {
+    a_fazer: "a_fazer",
+    fazendo: "em_andamento",
+    concluido: "finalizado",
+    impedido: "homologacao",
+    aguardando_resposta: "producao"
+  };
+  return statusMap[status];
 }
 
 async function nextId(table: string, column: string) {
@@ -370,14 +470,225 @@ export async function getActivities(): Promise<Activity[]> {
 
   const { data, error } = await supabase
     .from("atividades")
-    .select("id_atividade,titulo,descricao,status,prioridade,responsavel,categoria,data_inicio,prazo,data_conclusao,observacao,ordem_quadro,ativo,criado_por,data_criacao,atualizado_em")
+    .select("id_atividade,titulo,descricao,status,prioridade,id_responsavel,responsavel,categoria,data_inicio,prazo,data_conclusao,data_atribuicao,observacao,ordem_quadro,ativo,criado_por,data_criacao,atualizado_em")
     .eq("ativo", true)
     .order("ordem_quadro", { ascending: true })
     .order("prazo", { ascending: true, nullsFirst: false })
     .order("data_criacao", { ascending: false });
 
+  if (error && isMissingColumnError(error)) {
+    const { data: legacyData, error: legacyError } = await supabase
+      .from("atividades")
+      .select("id_atividade,titulo,descricao,status,prioridade,responsavel,categoria,data_inicio,prazo,data_conclusao,observacao,ordem_quadro,ativo,criado_por,data_criacao,atualizado_em")
+      .eq("ativo", true)
+      .order("ordem_quadro", { ascending: true })
+      .order("prazo", { ascending: true, nullsFirst: false })
+      .order("data_criacao", { ascending: false });
+    if (legacyError) throw legacyError;
+    return (legacyData ?? []).map(mapActivity);
+  }
+
   if (error) throw error;
   return (data ?? []).map(mapActivity);
+}
+
+export async function getActivityResponsibles(): Promise<ActivityResponsible[]> {
+  if (!supabase) return ensurePendingResponsible(readLocal("vv_activity_responsibles", demoActivityResponsibles));
+
+  const { data, error } = await supabase
+    .from("responsaveis_atividades")
+    .select("id_responsavel,nome,sobrenome,nome_completo,ativo")
+    .eq("ativo", true)
+    .order("nome");
+
+  if (error && isMissingColumnError(error)) return ensurePendingResponsible(readLocal("vv_activity_responsibles", demoActivityResponsibles));
+  if (error) throw error;
+  return ensurePendingResponsible((data ?? []).map(mapActivityResponsible));
+}
+
+export async function createActivityResponsible(input: { firstName: string; lastName: string }): Promise<ActivityResponsible> {
+  const firstName = cleanText(input.firstName);
+  const lastName = cleanText(input.lastName);
+  if (!firstName || !lastName) throw new Error("Informe nome e sobrenome do responsavel.");
+  if (firstName.toLowerCase() === "pendente") throw new Error("Pendente ja existe como responsavel padrao.");
+
+  if (!supabase) {
+    const current = ensurePendingResponsible(readLocal("vv_activity_responsibles", demoActivityResponsibles));
+    const duplicate = current.some((item) => item.fullName.toLowerCase() === `${firstName} ${lastName}`.toLowerCase());
+    if (duplicate) throw new Error("Responsavel ja cadastrado.");
+    const responsible = { id: Date.now(), firstName, lastName, fullName: `${firstName} ${lastName}`, active: true };
+    writeLocal("vv_activity_responsibles", [...current, responsible]);
+    return responsible;
+  }
+
+  const { data, error } = await supabase
+    .from("responsaveis_atividades")
+    .insert({ nome: firstName, sobrenome: lastName })
+    .select("id_responsavel,nome,sobrenome,nome_completo,ativo")
+    .single();
+
+  if (error && isMissingColumnError(error)) {
+    const current = ensurePendingResponsible(readLocal("vv_activity_responsibles", demoActivityResponsibles));
+    const duplicate = current.some((item) => item.fullName.toLowerCase() === `${firstName} ${lastName}`.toLowerCase());
+    if (duplicate) throw new Error("Responsavel ja cadastrado.");
+    const responsible = { id: Date.now(), firstName, lastName, fullName: `${firstName} ${lastName}`, active: true };
+    writeLocal("vv_activity_responsibles", [...current, responsible]);
+    return responsible;
+  }
+  if (error) throw error;
+  return mapActivityResponsible(data);
+}
+
+export async function getActivitySubtasks(): Promise<ActivitySubtask[]> {
+  if (!supabase) return readLocal("vv_activity_subtasks", demoActivitySubtasks).filter((item) => item.active !== false);
+
+  const { data, error } = await supabase
+    .from("subtarefas_atividades")
+    .select("id_subtarefa,id_atividade,titulo,descricao,status,prioridade,id_responsavel,responsavel,prazo,data_atribuicao,data_conclusao,ativo,ordem,data_criacao,atualizado_em")
+    .eq("ativo", true)
+    .order("id_atividade")
+    .order("ordem");
+
+  if (error && isMissingColumnError(error)) return readLocal("vv_activity_subtasks", demoActivitySubtasks).filter((item) => item.active !== false);
+  if (error) throw error;
+  return (data ?? []).map(mapActivitySubtask);
+}
+
+function subtaskRow(input: ActivitySubtaskInput) {
+  return {
+    id_atividade: input.activityId,
+    titulo: input.title.trim(),
+    descricao: input.description?.trim() || null,
+    status: input.status,
+    prioridade: input.priority,
+    id_responsavel: input.ownerId ?? null,
+    responsavel: input.owner?.trim() || null,
+    prazo: input.dueDate || null,
+    ordem: input.order ?? 0
+  };
+}
+
+export async function createActivitySubtask(input: ActivitySubtaskInput): Promise<ActivitySubtask> {
+  if (!input.title.trim()) throw new Error("Informe o titulo da subtarefa.");
+  const now = new Date().toISOString();
+  if (!supabase) {
+    const current = readLocal("vv_activity_subtasks", demoActivitySubtasks);
+    const subtask: ActivitySubtask = {
+      id: Date.now(),
+      activityId: input.activityId,
+      title: input.title.trim(),
+      description: input.description?.trim() || null,
+      status: input.status,
+      priority: input.priority,
+      ownerId: input.ownerId ?? null,
+      owner: input.owner?.trim() || null,
+      dueDate: input.dueDate || null,
+      assignedAt: input.ownerId ? now : null,
+      completedAt: input.status === "concluida" ? now : null,
+      active: true,
+      order: input.order ?? current.length + 1,
+      createdAt: now,
+      updatedAt: now
+    };
+    writeLocal("vv_activity_subtasks", [...current, subtask]);
+    return subtask;
+  }
+
+  const { data, error } = await supabase
+    .from("subtarefas_atividades")
+    .insert(subtaskRow(input))
+    .select("id_subtarefa,id_atividade,titulo,descricao,status,prioridade,id_responsavel,responsavel,prazo,data_atribuicao,data_conclusao,ativo,ordem,data_criacao,atualizado_em")
+    .single();
+
+  if (error && isMissingColumnError(error)) {
+    const current = readLocal("vv_activity_subtasks", demoActivitySubtasks);
+    const subtask: ActivitySubtask = {
+      id: Date.now(),
+      activityId: input.activityId,
+      title: input.title.trim(),
+      description: input.description?.trim() || null,
+      status: input.status,
+      priority: input.priority,
+      ownerId: input.ownerId ?? null,
+      owner: input.owner?.trim() || null,
+      dueDate: input.dueDate || null,
+      assignedAt: input.ownerId ? now : null,
+      completedAt: input.status === "concluida" ? now : null,
+      active: true,
+      order: input.order ?? current.length + 1,
+      createdAt: now,
+      updatedAt: now
+    };
+    writeLocal("vv_activity_subtasks", [...current, subtask]);
+    return subtask;
+  }
+  if (error) throw error;
+  return mapActivitySubtask(data);
+}
+
+export async function updateActivitySubtask(input: ActivitySubtaskInput & { id: number }) {
+  if (!supabase) {
+    const now = new Date().toISOString();
+    const current = readLocal("vv_activity_subtasks", demoActivitySubtasks);
+    writeLocal("vv_activity_subtasks", current.map((item) => item.id === input.id ? {
+      ...item,
+      title: input.title.trim(),
+      description: input.description?.trim() || null,
+      status: input.status,
+      priority: input.priority,
+      ownerId: input.ownerId ?? null,
+      owner: input.owner?.trim() || null,
+      dueDate: input.dueDate || null,
+      assignedAt: item.ownerId !== input.ownerId && input.ownerId ? now : item.assignedAt,
+      completedAt: input.status === "concluida" ? (item.completedAt ?? now) : null,
+      order: input.order ?? item.order,
+      updatedAt: now
+    } : item));
+    return { id: input.id };
+  }
+
+  const { error } = await supabase
+    .from("subtarefas_atividades")
+    .update(subtaskRow(input))
+    .eq("id_subtarefa", input.id);
+
+  if (error && isMissingColumnError(error)) {
+    const now = new Date().toISOString();
+    const current = readLocal("vv_activity_subtasks", demoActivitySubtasks);
+    writeLocal("vv_activity_subtasks", current.map((item) => item.id === input.id ? {
+      ...item,
+      title: input.title.trim(),
+      description: input.description?.trim() || null,
+      status: input.status,
+      priority: input.priority,
+      ownerId: input.ownerId ?? null,
+      owner: input.owner?.trim() || null,
+      dueDate: input.dueDate || null,
+      assignedAt: item.ownerId !== input.ownerId && input.ownerId ? now : item.assignedAt,
+      completedAt: input.status === "concluida" ? (item.completedAt ?? now) : null,
+      order: input.order ?? item.order,
+      updatedAt: now
+    } : item));
+    return { id: input.id };
+  }
+  if (error) throw error;
+  return { id: input.id };
+}
+
+export async function deleteActivitySubtask(subtaskId: number) {
+  if (!supabase) {
+    const current = readLocal("vv_activity_subtasks", demoActivitySubtasks);
+    writeLocal("vv_activity_subtasks", current.map((item) => item.id === subtaskId ? { ...item, active: false, updatedAt: new Date().toISOString() } : item));
+    return;
+  }
+
+  const { error } = await supabase.from("subtarefas_atividades").update({ ativo: false }).eq("id_subtarefa", subtaskId);
+  if (error && isMissingColumnError(error)) {
+    const current = readLocal("vv_activity_subtasks", demoActivitySubtasks);
+    writeLocal("vv_activity_subtasks", current.map((item) => item.id === subtaskId ? { ...item, active: false, updatedAt: new Date().toISOString() } : item));
+    return;
+  }
+  if (error) throw error;
 }
 
 export async function getActivitySummary(): Promise<ActivitySummary> {
@@ -400,10 +711,10 @@ export async function getActivitySummary(): Promise<ActivitySummary> {
 }
 
 function activityRow(input: ActivityInput) {
-  return {
+  const row: Record<string, unknown> = {
     titulo: input.title.trim(),
     descricao: input.description?.trim() || null,
-    status: input.status,
+    status: toDatabaseActivityStatus(input.status),
     prioridade: input.priority,
     responsavel: input.owner?.trim() || null,
     categoria: input.category?.trim() || null,
@@ -413,6 +724,8 @@ function activityRow(input: ActivityInput) {
     ordem_quadro: input.boardOrder ?? 0,
     criado_por: input.createdBy?.trim() || null
   };
+  if (input.ownerId !== undefined) row.id_responsavel = input.ownerId;
+  return row;
 }
 
 export async function createActivity(input: ActivityInput): Promise<{ id: number }> {
@@ -424,6 +737,17 @@ export async function createActivity(input: ActivityInput): Promise<{ id: number
     .select("id_atividade")
     .single();
 
+  if (error && isMissingColumnError(error)) {
+    const { id_responsavel, ...legacyRow } = activityRow(input);
+    void id_responsavel;
+    const { data: legacyData, error: legacyError } = await requireSupabase()
+      .from("atividades")
+      .insert(legacyRow)
+      .select("id_atividade")
+      .single();
+    if (legacyError) throw legacyError;
+    return { id: Number(legacyData.id_atividade) };
+  }
   if (error) throw error;
   return { id: Number(data.id_atividade) };
 }
@@ -433,6 +757,16 @@ export async function updateActivity(input: ActivityInput & { id: number }) {
     .from("atividades")
     .update(activityRow(input))
     .eq("id_atividade", input.id);
+  if (error && isMissingColumnError(error)) {
+    const { id_responsavel, ...legacyRow } = activityRow(input);
+    void id_responsavel;
+    const { error: legacyError } = await requireSupabase()
+      .from("atividades")
+      .update(legacyRow)
+      .eq("id_atividade", input.id);
+    if (legacyError) throw legacyError;
+    return { id: input.id };
+  }
   if (error) throw error;
   return { id: input.id };
 }
@@ -440,14 +774,22 @@ export async function updateActivity(input: ActivityInput & { id: number }) {
 export async function updateActivityStatus(activityId: number, status: ActivityStatus, boardOrder = 0) {
   const { error } = await requireSupabase()
     .from("atividades")
-    .update({ status, ordem_quadro: boardOrder })
+    .update({ status: toDatabaseActivityStatus(status), ordem_quadro: boardOrder })
     .eq("id_atividade", activityId);
   if (error) throw error;
   return { id: activityId };
 }
 
 export async function deleteActivity(activityId: number) {
-  const { error } = await requireSupabase()
+  const client = requireSupabase();
+  await client.from("historico_atividades").insert({
+    id_atividade: activityId,
+    campo_alterado: "exclusao_logica",
+    valor_anterior: "ativo=true",
+    valor_novo: "ativo=false",
+    usuario: "Versao Vegana"
+  });
+  const { error } = await client
     .from("atividades")
     .update({ ativo: false })
     .eq("id_atividade", activityId);

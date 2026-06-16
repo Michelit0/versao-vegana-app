@@ -121,17 +121,19 @@ export type RecipeItem = {
   preparationOrder: number | null;
 };
 
-export type ActivityStatus = "backlog" | "a_fazer" | "em_andamento" | "homologacao" | "producao" | "finalizado";
+export type ActivityStatus = "a_fazer" | "fazendo" | "concluido" | "impedido" | "aguardando_resposta";
 
 export type ActivityPriority = "baixa" | "media" | "alta" | "urgente";
 
 export type Activity = {
   id: number;
+  ownerId?: number | null;
   title: string;
   description: string | null;
   status: ActivityStatus;
   priority: ActivityPriority;
   owner: string | null;
+  assignedAt?: string | null;
   category: string | null;
   startDate: string | null;
   dueDate: string | null;
@@ -140,6 +142,34 @@ export type Activity = {
   boardOrder: number;
   active: boolean;
   createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ActivityResponsible = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  active: boolean;
+};
+
+export type ActivitySubtaskStatus = "a_fazer" | "fazendo" | "concluida" | "impedida";
+
+export type ActivitySubtask = {
+  id: number;
+  activityId: number;
+  title: string;
+  description: string | null;
+  status: ActivitySubtaskStatus;
+  priority: ActivityPriority;
+  ownerId: number | null;
+  owner: string | null;
+  dueDate: string | null;
+  assignedAt: string | null;
+  completedAt: string | null;
+  active: boolean;
+  order: number;
   createdAt: string;
   updatedAt: string;
 };

@@ -1,4 +1,4 @@
-import type { Activity, ActivitySummary, Customer, DashboardMetrics, PaymentMethod, Product, Sale } from "../types";
+import type { Activity, ActivityResponsible, ActivitySubtask, ActivitySummary, Customer, DashboardMetrics, PaymentMethod, Product, Sale } from "../types";
 
 export const demoProducts: Product[] = [
   { id: 1, name: "Brasileirinho", description: null, category: "Pratos Principais", price: 28.5, available: true, weight: 500, measure: "grama", yieldServings: 20 },
@@ -46,7 +46,9 @@ export const demoActivities: Activity[] = [
     description: "Conferir quantidade antes de sair para compras.",
     status: "a_fazer",
     priority: "alta",
+    ownerId: 1,
     owner: "Equipe",
+    assignedAt: new Date().toISOString(),
     category: "Compras",
     startDate: new Date().toISOString().slice(0, 10),
     dueDate: new Date().toISOString().slice(0, 10),
@@ -62,9 +64,11 @@ export const demoActivities: Activity[] = [
     id: 2,
     title: "Testar rendimento da baguete",
     description: "Validar quantidade para eventos maiores.",
-    status: "em_andamento",
+    status: "fazendo",
     priority: "media",
+    ownerId: 1,
     owner: "Cozinha",
+    assignedAt: new Date().toISOString(),
     category: "Producao",
     startDate: new Date().toISOString().slice(0, 10),
     dueDate: null,
@@ -77,6 +81,12 @@ export const demoActivities: Activity[] = [
     updatedAt: new Date().toISOString()
   }
 ];
+
+export const demoActivityResponsibles: ActivityResponsible[] = [
+  { id: 1, firstName: "Pendente", lastName: "Atribuicao", fullName: "Pendente Atribuicao", active: true }
+];
+
+export const demoActivitySubtasks: ActivitySubtask[] = [];
 
 export const demoActivitySummary: ActivitySummary = {
   open: 2,
