@@ -112,8 +112,8 @@ export function RegistrationsPage({ categories, customers, measures, products, r
     setMessage(null);
     try {
       await action();
-      setMessage(success);
       await onChanged();
+      setMessage(success);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Não foi possível salvar.");
     } finally {

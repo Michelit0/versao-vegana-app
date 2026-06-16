@@ -148,12 +148,14 @@ export async function getProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from("produtos")
     .select("id_produto,nome_produto,descricao,desc_categoria,preco,disponibilidade,peso,tipo_medida,id_recurso,url_imagem,etiquetas,destaque_autoatendimento,rendimento_pessoas")
+    .or("ativo.is.null,ativo.eq.true")
     .order("nome_produto");
 
   if (error && isMissingColumnError(error)) {
     const { data: legacyData, error: legacyError } = await supabase
       .from("produtos")
       .select("id_produto,nome_produto,desc_categoria,preco,disponibilidade,peso,tipo_medida,id_recurso,url_imagem,etiquetas")
+      .or("ativo.is.null,ativo.eq.true")
       .order("nome_produto");
     if (legacyError) throw legacyError;
     return legacyData.map(mapProduct);
@@ -169,6 +171,7 @@ export async function getCustomers(): Promise<Customer[]> {
   const { data, error } = await supabase
     .from("clientes")
     .select("id_cliente,nome_cliente,email_cliente,telefone_cliente,endereco_cliente,id_regiao,regiao,preferencias_alimentares")
+    .or("ativo.is.null,ativo.eq.true")
     .order("nome_cliente");
 
   if (error) throw error;
@@ -189,6 +192,7 @@ export async function getSuppliers(): Promise<Supplier[]> {
   const { data, error } = await supabase
     .from("fornecedores")
     .select("id_fornecedor,nome_fornecedor,telefone_fornecedor,email_fornecedor,observacao")
+    .or("ativo.is.null,ativo.eq.true")
     .order("nome_fornecedor");
   if (error) throw error;
   return data.map((row: any) => ({
@@ -205,6 +209,7 @@ export async function getResources(): Promise<Resource[]> {
   const { data, error } = await supabase
     .from("recursos")
     .select("id_recurso,tipo_recurso,nome_recurso,id_categoria_recurso,desc_categoria_rec,qtd_estoque,custo_unitario,tipo_medida,data_validade")
+    .or("ativo.is.null,ativo.eq.true")
     .order("nome_recurso");
   if (error) throw error;
   return data.map((row: any) => ({
@@ -479,8 +484,9 @@ export async function updateProduct(input: NewProductInput & { id: number }): Pr
 
 export async function deleteProduct(productId: number) {
   if (!supabase) return;
-  const { error } = await supabase.from("produtos").delete().eq("id_produto", productId);
+  const { data, error } = await supabase.rpc("inativar_produto", { p_id_produto: productId });
   if (error) throw error;
+  if (data !== true) throw new Error("Produto nao encontrado para exclusao.");
 }
 
 export async function createCustomer(input: NewCustomerInput) {
@@ -519,8 +525,9 @@ export async function updateCustomer(input: NewCustomerInput & { id: number }) {
 }
 
 export async function deleteCustomer(customerId: number) {
-  const { error } = await requireSupabase().from("clientes").delete().eq("id_cliente", customerId);
+  const { data, error } = await requireSupabase().rpc("inativar_cliente", { p_id_cliente: customerId });
   if (error) throw error;
+  if (data !== true) throw new Error("Cliente nao encontrado para exclusao.");
 }
 
 export async function createSupplier(input: NewSupplierInput) {
@@ -550,8 +557,9 @@ export async function updateSupplier(input: NewSupplierInput & { id: number }) {
 }
 
 export async function deleteSupplier(supplierId: number) {
-  const { error } = await requireSupabase().from("fornecedores").delete().eq("id_fornecedor", supplierId);
+  const { data, error } = await requireSupabase().rpc("inativar_fornecedor", { p_id_fornecedor: supplierId });
   if (error) throw error;
+  if (data !== true) throw new Error("Fornecedor nao encontrado para exclusao.");
 }
 
 export async function createResource(input: NewResourceInput) {
@@ -589,8 +597,9 @@ export async function updateResource(input: NewResourceInput & { id: number }) {
 }
 
 export async function deleteResource(resourceId: number) {
-  const { error } = await requireSupabase().from("recursos").delete().eq("id_recurso", resourceId);
+  const { data, error } = await requireSupabase().rpc("inativar_recurso", { p_id_recurso: resourceId });
   if (error) throw error;
+  if (data !== true) throw new Error("Recurso nao encontrado para exclusao.");
 }
 
 export async function createRecipe(input: NewRecipeInput) {
@@ -645,8 +654,9 @@ export async function updateRecipeItem(input: UpdateRecipeItemInput) {
 }
 
 export async function deleteRecipeItem(recipeItemId: string) {
-  const { error } = await requireSupabase().from("receitas").delete().eq("id_receita_item", Number(recipeItemId));
+  const { data, error } = await requireSupabase().rpc("excluir_item_receita", { p_id_receita_item: Number(recipeItemId) });
   if (error) throw error;
+  if (data !== true) throw new Error("Ingrediente da receita nao encontrado para exclusao.");
 }
 
 export async function createProduction(input: NewProductionInput) {
