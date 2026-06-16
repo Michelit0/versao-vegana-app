@@ -118,7 +118,7 @@ export function App() {
         />
       );
     }
-    if (activePage === "sales") return <SalesPage sales={sales} loading={loading} />;
+    if (activePage === "sales") return <SalesPage sales={sales} loading={loading} onChanged={refreshData} />;
     if (activePage === "self-service") return <SelfServicePage paymentMethods={paymentMethods} products={products} onSaved={refreshData} />;
     if (activePage === "kitchen") return <KitchenPage loading={loading} products={products} recipeItems={recipeItems} />;
     if (activePage === "events") return <EventsPage products={products} recipeItems={recipeItems} />;

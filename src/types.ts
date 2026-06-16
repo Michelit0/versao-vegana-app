@@ -40,14 +40,32 @@ export type SaleItemDraft = {
   note: string;
 };
 
+export type SaleDeliveryType = "retirada" | "entrega";
+
+export type SalePaymentStatus = "pago" | "pendente" | "pagar_na_retirada";
+
+export type SaleKitchenItem = {
+  productId: number | null;
+  productName: string;
+  quantity: number;
+  note: string | null;
+};
+
 export type Sale = {
   id: number;
   orderedAt: string;
+  customerId: number | null;
   customerName: string;
+  customerPhone: string | null;
+  deliveryType: SaleDeliveryType;
+  paymentStatus: SalePaymentStatus;
+  note: string | null;
+  cancellationReason: string | null;
   status: OrderStatus;
   paymentMethod: string;
   grossAmount: number;
   finalAmount: number;
+  items: SaleKitchenItem[];
 };
 
 export type DashboardMetrics = {

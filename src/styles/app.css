@@ -658,6 +658,386 @@ tbody tr { transition: background 120ms ease; }
 tbody tr:hover { background: var(--vv-surface-2); }
 tbody tr:last-child td { border-bottom: 0; }
 
+/* ======================= Pedidos / fila de cozinha ======================= */
+.orders-panel .panel-heading p {
+  color: var(--vv-text-muted);
+  font-weight: 600;
+  margin: 5px 0 0;
+}
+
+.orders-control-panel {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(120px, 0.7fr)) minmax(260px, 1.2fr);
+  margin-bottom: 16px;
+}
+
+.order-kpi-card,
+.order-service-time {
+  align-items: center;
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: 12px;
+  display: flex;
+  gap: 10px;
+  min-height: 72px;
+  padding: 13px 15px;
+}
+
+.order-kpi-card {
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.order-kpi-card strong {
+  color: var(--vv-wine-700);
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.order-kpi-card span,
+.order-service-time span,
+.order-service-time small {
+  color: var(--vv-text-muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.order-kpi-card.danger strong { color: var(--vv-red-700); }
+
+.order-service-time {
+  justify-content: flex-end;
+}
+
+.order-service-time svg { color: var(--vv-wine-700); }
+
+.order-service-time input {
+  background: var(--vv-surface);
+  border: 1px solid var(--vv-border);
+  border-radius: 10px;
+  color: var(--vv-text);
+  font-size: 1rem;
+  font-weight: 900;
+  min-height: 42px;
+  text-align: center;
+  width: 74px;
+}
+
+.orders-table-wrap {
+  max-height: min(70vh, 780px);
+  overflow: auto;
+}
+
+.orders-table {
+  min-width: 1120px;
+}
+
+.orders-table thead th {
+  z-index: 1;
+}
+
+.order-row-ok { background: rgba(232, 246, 226, 0.7); }
+.order-row-warning { background: rgba(255, 248, 226, 0.85); }
+.order-row-overdue { background: rgba(255, 241, 239, 0.9); }
+.order-row-done { background: rgba(255, 255, 255, 0.75); }
+.order-row-canceled { background: rgba(244, 238, 236, 0.9); }
+
+.order-queue-position,
+.muted-inline {
+  color: var(--vv-text-muted);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.order-customer-cell {
+  display: grid;
+  gap: 7px;
+  min-width: 210px;
+}
+
+.whatsapp-link,
+.whatsapp-icon-link {
+  align-items: center;
+  color: var(--vv-green-700);
+  display: inline-flex;
+  font-size: 0.88rem;
+  font-weight: 900;
+  gap: 6px;
+  text-decoration: none;
+  width: fit-content;
+}
+
+.whatsapp-link:hover,
+.whatsapp-icon-link:hover { text-decoration: underline; }
+
+.order-timer {
+  align-items: center;
+  border-radius: var(--vv-radius-pill);
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 900;
+  gap: 6px;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.order-timer.ok {
+  background: var(--vv-green-100);
+  color: var(--vv-green-700);
+}
+
+.order-timer.warning {
+  background: var(--vv-amber-100);
+  color: var(--vv-amber-700);
+}
+
+.order-timer.overdue {
+  background: var(--vv-red-100);
+  color: var(--vv-red-700);
+}
+
+.order-timer.done {
+  background: var(--vv-surface-2);
+  color: var(--vv-text-muted);
+}
+
+.order-status-cell {
+  align-items: flex-start;
+  display: grid;
+  gap: 10px;
+}
+
+.order-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.status-action-button {
+  align-items: center;
+  background: var(--vv-surface);
+  border: 1px solid var(--vv-border);
+  border-radius: 10px;
+  color: var(--vv-wine-700);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 900;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.status-action-button:hover {
+  background: var(--vv-wine-50);
+  border-color: var(--vv-wine-700);
+}
+
+.status-action-button.primary {
+  background: var(--vv-wine-700);
+  border-color: var(--vv-wine-700);
+  color: #fff;
+}
+
+.status-action-button.danger {
+  color: var(--vv-red-700);
+}
+
+.status-action-button:disabled {
+  cursor: progress;
+  opacity: 0.55;
+}
+
+.orders-control-panel-wide {
+  grid-template-columns: repeat(4, minmax(110px, 0.65fr)) minmax(260px, 1.25fr);
+}
+
+.order-kpi-card.warning strong { color: var(--vv-amber-700); }
+
+.pending-products-panel {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: 14px;
+  margin-bottom: 16px;
+  padding: 16px;
+}
+
+.compact-heading {
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.compact-heading h2 { font-size: 1rem; }
+.compact-heading p {
+  color: var(--vv-text-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  margin: 3px 0 0;
+}
+
+.observation-alert {
+  align-items: center;
+  background: var(--vv-amber-100);
+  border: 1px solid var(--vv-amber-500);
+  border-radius: var(--vv-radius-pill);
+  color: var(--vv-amber-700);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 900;
+  gap: 6px;
+  padding: 7px 11px;
+}
+
+.pending-products-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pending-product-chip {
+  align-items: center;
+  background: var(--vv-surface);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-pill);
+  color: var(--vv-wine-800);
+  display: inline-flex;
+  font-size: 0.84rem;
+  font-weight: 800;
+  gap: 7px;
+  padding: 8px 12px;
+}
+
+.pending-product-chip strong {
+  color: var(--vv-wine-700);
+  font-size: 1rem;
+}
+
+.orders-filter-row {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+  margin-bottom: 16px;
+}
+
+.segmented-control {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: 12px;
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+}
+
+.segmented-control button {
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  color: var(--vv-wine-700);
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 13px;
+}
+
+.segmented-control button.active {
+  background: var(--vv-wine-700);
+  color: #fff;
+}
+
+.orders-search-field { margin-bottom: 0; }
+.orders-kitchen-table { min-width: 1340px; }
+
+.order-items-list {
+  display: grid;
+  gap: 5px;
+  max-width: 320px;
+}
+
+.order-items-list span {
+  color: var(--vv-text-2);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.order-items-list em {
+  color: var(--vv-text-muted);
+  display: block;
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.order-items-list small {
+  color: var(--vv-wine-700);
+  font-weight: 900;
+}
+
+.order-note {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--vv-border);
+  border-radius: 10px;
+  color: var(--vv-text-2);
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.25;
+  max-width: 260px;
+  padding: 6px 8px;
+}
+
+.order-note.danger {
+  background: var(--vv-red-100);
+  border-color: var(--vv-red-500);
+  color: var(--vv-red-700);
+  margin-top: 6px;
+}
+
+.order-fulfillment-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  max-width: 180px;
+}
+
+.pill.payment-pago {
+  background: var(--vv-green-100);
+  color: var(--vv-green-700);
+}
+
+.pill.payment-pendente,
+.pill.payment-pagar_na_retirada {
+  background: var(--vv-amber-100);
+  color: var(--vv-amber-700);
+}
+
+.cancel-order-modal textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.modal-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
 /* ======================= Pills / status ======================= */
 .pill {
   border-radius: var(--vv-radius-pill);
@@ -904,6 +1284,15 @@ textarea:focus {
   outline: 0;
   border-color: var(--vv-wine-700);
   box-shadow: 0 0 0 3px rgba(106, 20, 40, 0.12);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: #f3f0ec;
+  color: var(--vv-text-muted);
+  cursor: not-allowed;
+  opacity: 0.78;
 }
 
 .checkbox-field {
@@ -2067,6 +2456,9 @@ textarea:focus {
   .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ops-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .self-service-layout { grid-template-columns: minmax(0, 1fr) 320px; }
+  .orders-control-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .orders-control-panel-wide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .order-service-time { justify-content: flex-start; }
 }
 
 @media (max-width: 980px) {
@@ -2233,6 +2625,17 @@ textarea:focus {
 
   .panel-heading .secondary-action,
   .panel-heading .primary-action { width: 100%; }
+
+  .orders-control-panel { grid-template-columns: 1fr; }
+  .orders-control-panel-wide { grid-template-columns: 1fr; }
+  .orders-filter-row { grid-template-columns: 1fr; }
+  .segmented-control { width: 100%; }
+  .segmented-control button { flex: 1; }
+  .order-service-time {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .orders-table-wrap { max-height: none; }
 
   .checkout-bar { position: static; }
 

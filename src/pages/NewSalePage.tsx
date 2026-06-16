@@ -17,9 +17,12 @@ type NewSalePageProps = {
 export function NewSalePage({ customers, products, paymentMethods, regions, onCustomerCreated, onSaved }: NewSalePageProps) {
   const [customerId, setCustomerId] = useState(customers[0]?.id ?? 0);
   const [paymentMethodId, setPaymentMethodId] = useState(paymentMethods[0]?.id ?? 0);
+  const [deliveryType, setDeliveryType] = useState<"retirada" | "entrega">("retirada");
+  const [paymentStatus, setPaymentStatus] = useState<"pago" | "pendente" | "pagar_na_retirada">("pago");
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [packageFee, setPackageFee] = useState(0);
   const [discount, setDiscount] = useState(0);
+  const [saleNote, setSaleNote] = useState("");
   const [items, setItems] = useState<SaleItemDraft[]>([{ productId: products[0]?.id ?? 0, quantity: 1, note: "" }]);
   const [saving, setSaving] = useState(false);
   const [savingCustomer, setSavingCustomer] = useState(false);
@@ -38,6 +41,13 @@ export function NewSalePage({ customers, products, paymentMethods, regions, onCu
     if (!newCustomerRegionId && regions[0]) setNewCustomerRegionId(regions[0].id);
     setItems((current) => current.map((item) => item.productId ? item : { ...item, productId: products[0]?.id ?? 0 }));
   }, [customerId, customers, newCustomerRegionId, paymentMethodId, paymentMethods, products, regions]);
+
+  useEffect(() => {
+    if (deliveryType === "retirada") {
+      setDeliveryFee(0);
+      setPackageFee(0);
+    }
+  }, [deliveryType]);
 
   const subtotal = useMemo(() => {
     return items.reduce((sum, item) => {
@@ -86,7 +96,7 @@ export function NewSalePage({ customers, products, paymentMethods, regions, onCu
     }
     setSaving(true);
     try {
-      await createSale({ customerId, paymentMethodId, deliveryFee, packageFee, discount, items });
+      await createSale({ customerId, paymentMethodId, deliveryType, paymentStatus, deliveryFee, packageFee, discount, items, note: saleNote.trim() || null });
       onSaved();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Não foi possível salvar a venda.");
@@ -138,16 +148,35 @@ export function NewSalePage({ customers, products, paymentMethods, regions, onCu
           </div>
           <SearchableSelect label="Forma de pagamento" value={paymentMethodId} options={paymentOptions} placeholder="Digite Pix, crédito..." onChange={setPaymentMethodId} />
           <label>
+            Atendimento
+            <select value={deliveryType} onChange={(event) => setDeliveryType(event.target.value as "retirada" | "entrega")}>
+              <option value="retirada">Retirada na loja</option>
+              <option value="entrega">Entrega</option>
+            </select>
+          </label>
+          <label>
+            Status pagamento
+            <select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value as "pago" | "pendente" | "pagar_na_retirada")}>
+              <option value="pago">Pago</option>
+              <option value="pendente">Pendente</option>
+              <option value="pagar_na_retirada">Pagar na retirada</option>
+            </select>
+          </label>
+          <label>
             Taxa entrega
-            <input type="number" min="0" step="0.01" value={deliveryFee} onChange={(event) => setDeliveryFee(Number(event.target.value))} />
+            <input type="number" min="0" step="0.01" value={deliveryFee} disabled={deliveryType === "retirada"} onChange={(event) => setDeliveryFee(Number(event.target.value))} />
           </label>
           <label>
             Taxa embalagem
-            <input type="number" min="0" step="0.01" value={packageFee} onChange={(event) => setPackageFee(Number(event.target.value))} />
+            <input type="number" min="0" step="0.01" value={packageFee} disabled={deliveryType === "retirada"} onChange={(event) => setPackageFee(Number(event.target.value))} />
           </label>
           <label>
             Desconto
             <input type="number" min="0" step="0.01" value={discount} onChange={(event) => setDiscount(Number(event.target.value))} />
+          </label>
+          <label className="form-wide">
+            Observação do pedido
+            <input maxLength={160} value={saleNote} onChange={(event) => setSaleNote(event.target.value)} placeholder="Ex.: retirar as 13h, sem cebola, embalagem separada" />
           </label>
         </div>
         {!showCustomerForm ? (

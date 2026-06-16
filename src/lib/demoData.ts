@@ -21,9 +21,9 @@ export const demoPaymentMethods: PaymentMethod[] = [
 ];
 
 export const demoSales: Sale[] = [
-  { id: 1, orderedAt: new Date().toISOString(), customerName: "Teresa Cristina", status: "finalizado", paymentMethod: "Pix", grossAmount: 40.8, finalAmount: 40.8 },
-  { id: 2, orderedAt: new Date().toISOString(), customerName: "Michel Pinheiro", status: "finalizado", paymentMethod: "Pix", grossAmount: 36.5, finalAmount: 36.5 },
-  { id: 3, orderedAt: new Date().toISOString(), customerName: "Amanda Haar", status: "pendente", paymentMethod: "Cartao Credito", grossAmount: 28.5, finalAmount: 27.6 }
+  { id: 1, orderedAt: new Date().toISOString(), customerId: 1, customerName: "Teresa Cristina", customerPhone: "61999990001", deliveryType: "retirada", paymentStatus: "pago", note: null, cancellationReason: null, status: "finalizado", paymentMethod: "Pix", grossAmount: 40.8, finalAmount: 40.8, items: [{ productId: 1, productName: "Brasileirinho", quantity: 1, note: null }] },
+  { id: 2, orderedAt: new Date().toISOString(), customerId: 2, customerName: "Michel Pinheiro", customerPhone: "619829324430", deliveryType: "entrega", paymentStatus: "pago", note: "Sem pimenta", cancellationReason: null, status: "finalizado", paymentMethod: "Pix", grossAmount: 36.5, finalAmount: 36.5, items: [{ productId: 2, productName: "Macarrao a Bolonhesa de Lentilha", quantity: 1, note: "Sem pimenta" }] },
+  { id: 3, orderedAt: new Date().toISOString(), customerId: 3, customerName: "Amanda Haar", customerPhone: "61984710090", deliveryType: "retirada", paymentStatus: "pagar_na_retirada", note: "Chamar no balcao", cancellationReason: null, status: "pendente", paymentMethod: "Cartao Credito", grossAmount: 28.5, finalAmount: 27.6, items: [{ productId: 3, productName: "Moqueca de Banana da Terra", quantity: 1, note: null }] }
 ];
 
 export const demoDashboard: DashboardMetrics = {

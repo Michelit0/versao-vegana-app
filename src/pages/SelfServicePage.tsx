@@ -16,6 +16,8 @@ export function SelfServicePage({ paymentMethods, products, onSaved }: SelfServi
   const [cart, setCart] = useState<SaleItemDraft[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [paymentMethodId, setPaymentMethodId] = useState(paymentMethods[0]?.id ?? 0);
+  const [paymentStatus, setPaymentStatus] = useState<"pago" | "pagar_na_retirada">("pago");
+  const [orderNote, setOrderNote] = useState("");
   const [category, setCategory] = useState("destaques");
   const [saving, setSaving] = useState(false);
   const [ticket, setTicket] = useState<number | null>(null);
@@ -30,6 +32,7 @@ export function SelfServicePage({ paymentMethods, products, onSaved }: SelfServi
     const timer = window.setTimeout(() => {
       setCart([]);
       setCustomerName("");
+      setOrderNote("");
       setMessage("Carrinho limpo por inatividade.");
     }, 180000);
     return () => window.clearTimeout(timer);
@@ -57,7 +60,7 @@ export function SelfServicePage({ paymentMethods, products, onSaved }: SelfServi
     setCart((current) => {
       const found = current.find((item) => item.productId === product.id);
       if (found) return current.map((item) => item.productId === product.id ? { ...item, quantity: item.quantity + 1 } : item);
-      return [...current, { productId: product.id, quantity: 1, note: "Autoatendimento" }];
+      return [...current, { productId: product.id, quantity: 1, note: "" }];
     });
   }
 
@@ -79,6 +82,8 @@ export function SelfServicePage({ paymentMethods, products, onSaved }: SelfServi
         customerId: null,
         customerName: customerName.trim() || "Autoatendimento",
         paymentMethodId,
+        deliveryType: "retirada",
+        paymentStatus,
         deliveryFee: 0,
         packageFee: 0,
         discount: 0,
@@ -86,11 +91,12 @@ export function SelfServicePage({ paymentMethods, products, onSaved }: SelfServi
         channel: "balcao",
         status: "pendente",
         serviceStatus: "nao_iniciado",
-        note: "Pedido criado no autoatendimento"
+        note: orderNote.trim() || null
       });
       setTicket(order.id);
       setCart([]);
       setCustomerName("");
+      setOrderNote("");
       await onSaved();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Não foi possível finalizar o pedido.");
@@ -102,6 +108,7 @@ export function SelfServicePage({ paymentMethods, products, onSaved }: SelfServi
   function resetOrder() {
     setCart([]);
     setCustomerName("");
+    setOrderNote("");
     setTicket(null);
     setMessage(null);
   }
@@ -162,6 +169,8 @@ export function SelfServicePage({ paymentMethods, products, onSaved }: SelfServi
         ) : null}
         <label>Nome para chamar o pedido<input value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Opcional" /></label>
         <label>Pagamento<select value={paymentMethodId} onChange={(event) => setPaymentMethodId(Number(event.target.value))}>{paymentMethods.map((method) => <option key={method.id} value={method.id}>{method.name}</option>)}</select></label>
+        <label>Status pagamento<select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value as "pago" | "pagar_na_retirada")}><option value="pago">Pago agora</option><option value="pagar_na_retirada">Pagar na retirada</option></select></label>
+        <label>Observação<input maxLength={140} value={orderNote} onChange={(event) => setOrderNote(event.target.value)} placeholder="Ex.: sem cebola, retirar depois" /></label>
         <div className="cart-list">
           {cart.length ? cart.map((item) => {
             const product = products.find((candidate) => candidate.id === item.productId);

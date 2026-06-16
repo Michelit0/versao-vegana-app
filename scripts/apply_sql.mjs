@@ -8,7 +8,7 @@ if (!sqlPath) {
 }
 
 const password = process.env.SUPABASE_DB_PASSWORD;
-const host = process.env.SUPABASE_DB_HOST ?? "aws-0-us-west-2.pooler.supabase.com";
+const host = process.env.SUPABASE_DB_HOST ?? "aws-1-us-west-2.pooler.supabase.com";
 const user = process.env.SUPABASE_DB_USER ?? "postgres.zcfngsbfxtrpiuguydlp";
 const database = process.env.SUPABASE_DB_NAME ?? "postgres";
 const port = Number(process.env.SUPABASE_DB_PORT ?? 5432);

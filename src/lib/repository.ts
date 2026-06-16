@@ -1,12 +1,14 @@
 import { supabase } from "./supabase";
 import { demoActivities, demoActivityResponsibles, demoActivitySubtasks, demoActivitySummary, demoCustomers, demoDashboard, demoPaymentMethods, demoProducts, demoSales } from "./demoData";
 import { cleanText } from "./format";
-import type { Activity, ActivityPriority, ActivityResponsible, ActivityStatus, ActivitySubtask, ActivitySubtaskStatus, ActivitySummary, Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, PurchaseQuote, RecipeItem, Region, Resource, Sale, SaleItemDraft, Supplier } from "../types";
+import type { Activity, ActivityPriority, ActivityResponsible, ActivityStatus, ActivitySubtask, ActivitySubtaskStatus, ActivitySummary, Category, Customer, DashboardMetrics, Measure, OrderStatus, PaymentMethod, Product, PurchaseQuote, RecipeItem, Region, Resource, Sale, SaleDeliveryType, SaleItemDraft, SalePaymentStatus, Supplier } from "../types";
 
 type NewSaleInput = {
   customerId?: number | null;
   customerName?: string | null;
   paymentMethodId: number;
+  deliveryType?: SaleDeliveryType;
+  paymentStatus?: SalePaymentStatus;
   deliveryFee: number;
   packageFee: number;
   discount: number;
@@ -799,22 +801,108 @@ export async function deleteActivity(activityId: number) {
 export async function getSales(): Promise<Sale[]> {
   if (!supabase) return demoSales;
 
-  const { data, error } = await supabase
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+  const saleColumns = "id_pedido,data_pedido,id_cliente,status_pedido,valor_total,valor_final,nome_cliente,forma_pagamento,tipo_entrega,status_pagamento,observacao,motivo_cancelamento";
+  const { data: activeOrders, error: activeOrdersError } = await supabase
     .from("pedidos")
-    .select("id_pedido,data_pedido,status_pedido,valor_total,valor_final,nome_cliente,forma_pagamento")
-    .order("data_pedido", { ascending: false })
-    .limit(50);
+    .select(saleColumns)
+    .in("status_pedido", ["pendente", "rascunho"])
+    .order("data_pedido", { ascending: true });
 
-  if (error) throw error;
+  if (activeOrdersError) throw activeOrdersError;
+
+  const { data: closedOrders, error: closedOrdersError } = await supabase
+    .from("pedidos")
+    .select(saleColumns)
+    .in("status_pedido", ["finalizado", "cancelado"])
+    .gte("data_pedido", monthStart)
+    .lt("data_pedido", nextMonthStart)
+    .order("data_pedido", { ascending: false })
+    .limit(250);
+
+  if (closedOrdersError) throw closedOrdersError;
+
+  const data = [...(activeOrders ?? []), ...(closedOrders ?? [])];
+  const orderIds = Array.from(new Set(
+    data
+      .map((row: any) => row.id_pedido)
+      .filter((id) => id !== null && id !== undefined)
+      .map(Number)
+  ));
+  const itemsByOrderId = new Map<number, Sale["items"]>();
+
+  if (orderIds.length) {
+    const { data: itemRows, error: itemsError } = await supabase
+      .from("itens_pedido")
+      .select("id_pedido,id_produto,nome_produto,quantidade,observacao")
+      .in("id_pedido", orderIds);
+
+    if (itemsError) throw itemsError;
+    for (const item of itemRows ?? []) {
+      const orderId = Number(item.id_pedido);
+      const current = itemsByOrderId.get(orderId) ?? [];
+      current.push({
+        productId: item.id_produto === null || item.id_produto === undefined ? null : Number(item.id_produto),
+        productName: cleanText(item.nome_produto, "Produto nao informado"),
+        quantity: Number(item.quantidade ?? 0),
+        note: cleanText(item.observacao, "") || null
+      });
+      itemsByOrderId.set(orderId, current);
+    }
+  }
+
+  const customerIds = Array.from(new Set(
+    (data ?? [])
+      .map((row: any) => row.id_cliente)
+      .filter((id) => id !== null && id !== undefined)
+      .map(Number)
+  ));
+  const phonesByCustomerId = new Map<number, string | null>();
+
+  if (customerIds.length) {
+    const { data: customerRows, error: customerError } = await supabase
+      .from("clientes")
+      .select("id_cliente,telefone_cliente")
+      .in("id_cliente", customerIds);
+
+    if (customerError) throw customerError;
+    for (const customer of customerRows ?? []) {
+      phonesByCustomerId.set(Number(customer.id_cliente), cleanText(customer.telefone_cliente, "") || null);
+    }
+  }
+
   return data.map((row: any) => ({
     id: row.id_pedido,
     orderedAt: row.data_pedido ?? new Date().toISOString(),
+    customerId: row.id_cliente === null || row.id_cliente === undefined ? null : Number(row.id_cliente),
     customerName: cleanText(row.nome_cliente, "Cliente nao informado"),
+    customerPhone: row.id_cliente === null || row.id_cliente === undefined ? null : phonesByCustomerId.get(Number(row.id_cliente)) ?? null,
+    deliveryType: row.tipo_entrega === "entrega" ? "entrega" : "retirada",
+    paymentStatus: normalizePaymentStatus(row.status_pagamento),
+    note: cleanText(row.observacao, "") || null,
+    cancellationReason: cleanText(row.motivo_cancelamento, "") || null,
     status: row.status_pedido,
     paymentMethod: cleanText(row.forma_pagamento, "-"),
     grossAmount: Number(row.valor_total ?? 0),
-    finalAmount: Number(row.valor_final ?? 0)
+    finalAmount: Number(row.valor_final ?? 0),
+    items: itemsByOrderId.get(Number(row.id_pedido)) ?? []
   }));
+}
+
+export async function updateSaleStatus(orderId: number, status: OrderStatus, cancellationReason?: string): Promise<{ id: number }> {
+  if (!supabase) return { id: orderId };
+
+  const { data, error } = await requireSupabase().rpc("atualizar_status_pedido", {
+    p_id_pedido: orderId,
+    p_status: status,
+    p_motivo_cancelamento: cancellationReason ?? null
+  });
+
+  if (error) throw error;
+  if (data !== true) throw new Error(`Pedido #${orderId} nao encontrado para atualizar status.`);
+  return { id: orderId };
 }
 
 export async function getDashboard(): Promise<DashboardMetrics> {
@@ -1292,6 +1380,8 @@ export async function createSale(input: NewSaleInput): Promise<{ id: number }> {
       id_forma_pagamento: input.paymentMethodId,
       forma_pagamento: method?.name ?? null,
       status_pedido: input.status ?? "pendente",
+      tipo_entrega: input.deliveryType ?? "retirada",
+      status_pagamento: input.paymentStatus ?? "pago",
       valor_total: grossAmount,
       taxa_cartao: fee,
       taxa_entrega: input.deliveryFee,
@@ -1333,4 +1423,8 @@ export async function createSale(input: NewSaleInput): Promise<{ id: number }> {
     if (stockError) throw stockError;
   }
   return { id: order.id_pedido };
+}
+
+function normalizePaymentStatus(value: unknown): SalePaymentStatus {
+  return value === "pendente" || value === "pagar_na_retirada" || value === "pago" ? value : "pago";
 }
