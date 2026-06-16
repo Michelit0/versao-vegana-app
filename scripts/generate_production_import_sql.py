@@ -160,8 +160,11 @@ def insert(table: str, columns: list[str], values: list[object], conflict: str |
     statement = f"insert into public.{table} ({rendered_columns}) values ({rendered_values})"
     if conflict:
         update_columns = [column for column in columns if column != conflict]
-        updates = ", ".join(f"{column} = excluded.{column}" for column in update_columns)
-        statement += f" on conflict ({conflict}) do update set {updates}"
+        if update_columns:
+            updates = ", ".join(f"{column} = excluded.{column}" for column in update_columns)
+            statement += f" on conflict ({conflict}) do update set {updates}"
+        else:
+            statement += f" on conflict ({conflict}) do nothing"
     return statement + ";"
 
 
