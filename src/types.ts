@@ -120,3 +120,35 @@ export type RecipeItem = {
   measure: string | null;
   preparationOrder: number | null;
 };
+
+export type ActivityStatus = "backlog" | "a_fazer" | "em_andamento" | "homologacao" | "producao" | "finalizado";
+
+export type ActivityPriority = "baixa" | "media" | "alta" | "urgente";
+
+export type Activity = {
+  id: number;
+  title: string;
+  description: string | null;
+  status: ActivityStatus;
+  priority: ActivityPriority;
+  owner: string | null;
+  category: string | null;
+  startDate: string | null;
+  dueDate: string | null;
+  completedAt: string | null;
+  note: string | null;
+  boardOrder: number;
+  active: boolean;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ActivitySummary = {
+  open: number;
+  overdue: number;
+  dueToday: number;
+  dueSoon: number;
+  highPriority: number;
+  completedThisWeek: number;
+};

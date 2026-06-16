@@ -1,9 +1,10 @@
 import { EmptyState } from "../components/EmptyState";
 import { KpiCard } from "../components/KpiCard";
 import { currency, parseLocalDate } from "../lib/format";
-import type { DashboardMetrics } from "../types";
+import type { ActivitySummary, DashboardMetrics } from "../types";
 
 type DashboardPageProps = {
+  activitySummary: ActivitySummary | null;
   customersCount: number;
   dashboard: DashboardMetrics | null;
   loading: boolean;
@@ -12,7 +13,7 @@ type DashboardPageProps = {
   resourcesCount: number;
 };
 
-export function DashboardPage({ customersCount, dashboard, loading, productsCount, recipeItemsCount, resourcesCount }: DashboardPageProps) {
+export function DashboardPage({ activitySummary, customersCount, dashboard, loading, productsCount, recipeItemsCount, resourcesCount }: DashboardPageProps) {
   if (loading) return <EmptyState title="Carregando painel" description="Buscando vendas, produtos e resumo financeiro." />;
   if (!dashboard) return <EmptyState title="Sem dados" description="Ainda não há informações para montar o painel." />;
 
@@ -38,6 +39,22 @@ export function DashboardPage({ customersCount, dashboard, loading, productsCoun
         <KpiCard label="Pedidos abertos" value={String(dashboard.openOrders)} detail="Pendentes de finalização" />
         <KpiCard label="Ticket médio" value={currency.format(dashboard.averageTicket)} detail="Média do mês" />
       </div>
+      {activitySummary ? (
+        <section className="panel activity-alert-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Atividades da equipe</h2>
+              <span className="muted-count">Alertas rapidos para nao deixar demanda vencer.</span>
+            </div>
+          </div>
+          <div className="ops-summary-grid">
+            <div><strong>{activitySummary.open}</strong><span>abertas</span></div>
+            <div className={activitySummary.overdue > 0 ? "summary-danger" : ""}><strong>{activitySummary.overdue}</strong><span>atrasadas</span></div>
+            <div className={activitySummary.dueToday > 0 ? "summary-warning" : ""}><strong>{activitySummary.dueToday}</strong><span>vencem hoje</span></div>
+            <div><strong>{activitySummary.highPriority}</strong><span>alta prioridade</span></div>
+          </div>
+        </section>
+      ) : null}
       <div className="split-layout">
         <section className="panel">
           <div className="panel-heading">

@@ -1685,6 +1685,161 @@ textarea:focus {
   width: 100%;
 }
 
+/* ======================= Planner / Atividades ======================= */
+.activity-alert-panel .summary-danger,
+.planner-summary-panel .summary-danger {
+  background: var(--vv-red-100);
+  border-color: var(--vv-red-500);
+}
+
+.activity-alert-panel .summary-warning,
+.planner-summary-panel .summary-warning {
+  background: var(--vv-amber-100);
+  border-color: var(--vv-amber-500);
+}
+
+.planner-board {
+  align-items: start;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(6, minmax(260px, 1fr));
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.planner-column {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--vv-border);
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  min-height: 520px;
+  padding: 14px;
+}
+
+.planner-column-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.planner-column-heading strong {
+  color: var(--vv-wine-800);
+  display: block;
+  font-size: 1rem;
+}
+
+.planner-column-heading span,
+.planner-empty {
+  color: var(--vv-text-muted);
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.planner-card-list {
+  display: grid;
+  gap: 12px;
+}
+
+.planner-card {
+  background: #fffdf8;
+  border: 1px solid var(--vv-border);
+  border-left: 5px solid var(--vv-border-strong);
+  border-radius: 14px;
+  box-shadow: var(--vv-shadow-xs);
+  cursor: grab;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.planner-card:active {
+  cursor: grabbing;
+}
+
+.planner-card strong {
+  color: var(--vv-text);
+  font-size: 1rem;
+}
+
+.planner-card p {
+  color: var(--vv-text-2);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.planner-card.priority-baixa { border-left-color: var(--vv-green-300); }
+.planner-card.priority-media { border-left-color: var(--vv-amber-500); }
+.planner-card.priority-alta { border-left-color: var(--vv-wine-600); }
+.planner-card.priority-urgente { border-left-color: var(--vv-red-500); }
+
+.planner-card.due-overdue {
+  background: #fff1ef;
+  border-color: #f2b5b0;
+}
+
+.planner-card.due-today,
+.planner-card.due-soon {
+  background: #fff8e8;
+  border-color: #f1cc87;
+}
+
+.planner-card-topline,
+.planner-meta,
+.planner-card-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.planner-card-actions {
+  margin-top: 4px;
+}
+
+.priority-chip,
+.due-chip {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 900;
+  gap: 5px;
+  padding: 5px 9px;
+}
+
+.priority-chip.baixa { background: var(--vv-green-100); color: var(--vv-green-700); }
+.priority-chip.media { background: var(--vv-amber-100); color: var(--vv-amber-700); }
+.priority-chip.alta { background: var(--vv-wine-100); color: var(--vv-wine-800); }
+.priority-chip.urgente { background: var(--vv-red-100); color: var(--vv-red-700); }
+
+.due-chip {
+  background: #fff;
+  border: 1px solid var(--vv-border);
+  color: var(--vv-wine-800);
+}
+
+.due-chip.overdue {
+  color: var(--vv-red-700);
+}
+
+.planner-meta span {
+  align-items: center;
+  color: var(--vv-text-muted);
+  display: inline-flex;
+  font-size: 0.8rem;
+  font-weight: 800;
+  gap: 5px;
+}
+
+.form-wide {
+  grid-column: 1 / -1;
+}
+
 /* =========================================================
    Responsivo
    ========================================================= */
@@ -1787,6 +1942,10 @@ textarea:focus {
   .bi-dashboard-frame {
     height: 72vh;
     min-height: 460px;
+  }
+
+  .planner-board {
+    grid-template-columns: repeat(6, minmax(250px, 78vw));
   }
 
   .cart-list { max-height: 420px; }

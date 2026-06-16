@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
-import { demoCustomers, demoDashboard, demoPaymentMethods, demoProducts, demoSales } from "./demoData";
+import { demoActivities, demoActivitySummary, demoCustomers, demoDashboard, demoPaymentMethods, demoProducts, demoSales } from "./demoData";
 import { cleanText } from "./format";
-import type { Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, PurchaseQuote, RecipeItem, Region, Resource, Sale, SaleItemDraft, Supplier } from "../types";
+import type { Activity, ActivityPriority, ActivityStatus, ActivitySummary, Category, Customer, DashboardMetrics, Measure, PaymentMethod, Product, PurchaseQuote, RecipeItem, Region, Resource, Sale, SaleItemDraft, Supplier } from "../types";
 
 type NewSaleInput = {
   customerId?: number | null;
@@ -101,6 +101,21 @@ type NewPurchaseInput = {
   invoice?: string | null;
 };
 
+type ActivityInput = {
+  id?: number;
+  title: string;
+  description?: string | null;
+  status: ActivityStatus;
+  priority: ActivityPriority;
+  owner?: string | null;
+  category?: string | null;
+  startDate?: string | null;
+  dueDate?: string | null;
+  note?: string | null;
+  boardOrder?: number;
+  createdBy?: string | null;
+};
+
 function requireSupabase() {
   if (!supabase) {
     throw new Error("Supabase não configurado. Preencha VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
@@ -129,6 +144,27 @@ function mapProduct(row: any): Product {
     tags: row.etiquetas ?? [],
     featuredSelfService: Boolean(row.destaque_autoatendimento),
     yieldServings: Number(row.rendimento_pessoas ?? 20)
+  };
+}
+
+function mapActivity(row: any): Activity {
+  return {
+    id: Number(row.id_atividade),
+    title: cleanText(row.titulo),
+    description: cleanText(row.descricao, "") || null,
+    status: row.status,
+    priority: row.prioridade,
+    owner: cleanText(row.responsavel, "") || null,
+    category: cleanText(row.categoria, "") || null,
+    startDate: row.data_inicio ?? null,
+    dueDate: row.prazo ?? null,
+    completedAt: row.data_conclusao ?? null,
+    note: cleanText(row.observacao, "") || null,
+    boardOrder: Number(row.ordem_quadro ?? 0),
+    active: row.ativo !== false,
+    createdBy: cleanText(row.criado_por, "") || null,
+    createdAt: row.data_criacao,
+    updatedAt: row.atualizado_em
   };
 }
 
@@ -327,6 +363,95 @@ export async function getPurchaseQuotes(resourceId: number): Promise<PurchaseQuo
     lastQuantity: Number(row.ultima_qtd_comprada ?? 0),
     lastMeasure: row.ultima_tipo_medida ?? null
   }));
+}
+
+export async function getActivities(): Promise<Activity[]> {
+  if (!supabase) return demoActivities;
+
+  const { data, error } = await supabase
+    .from("atividades")
+    .select("id_atividade,titulo,descricao,status,prioridade,responsavel,categoria,data_inicio,prazo,data_conclusao,observacao,ordem_quadro,ativo,criado_por,data_criacao,atualizado_em")
+    .eq("ativo", true)
+    .order("ordem_quadro", { ascending: true })
+    .order("prazo", { ascending: true, nullsFirst: false })
+    .order("data_criacao", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []).map(mapActivity);
+}
+
+export async function getActivitySummary(): Promise<ActivitySummary> {
+  if (!supabase) return demoActivitySummary;
+
+  const { data, error } = await supabase
+    .from("vw_resumo_atividades")
+    .select("atividades_abertas,atividades_atrasadas,vencem_hoje,vencem_em_ate_2_dias,alta_prioridade,finalizadas_semana")
+    .maybeSingle();
+
+  if (error) throw error;
+  return {
+    open: Number(data?.atividades_abertas ?? 0),
+    overdue: Number(data?.atividades_atrasadas ?? 0),
+    dueToday: Number(data?.vencem_hoje ?? 0),
+    dueSoon: Number(data?.vencem_em_ate_2_dias ?? 0),
+    highPriority: Number(data?.alta_prioridade ?? 0),
+    completedThisWeek: Number(data?.finalizadas_semana ?? 0)
+  };
+}
+
+function activityRow(input: ActivityInput) {
+  return {
+    titulo: input.title.trim(),
+    descricao: input.description?.trim() || null,
+    status: input.status,
+    prioridade: input.priority,
+    responsavel: input.owner?.trim() || null,
+    categoria: input.category?.trim() || null,
+    data_inicio: input.startDate || null,
+    prazo: input.dueDate || null,
+    observacao: input.note?.trim() || null,
+    ordem_quadro: input.boardOrder ?? 0,
+    criado_por: input.createdBy?.trim() || null
+  };
+}
+
+export async function createActivity(input: ActivityInput): Promise<{ id: number }> {
+  if (!supabase) return { id: Math.floor(Math.random() * 100000) };
+
+  const { data, error } = await requireSupabase()
+    .from("atividades")
+    .insert(activityRow(input))
+    .select("id_atividade")
+    .single();
+
+  if (error) throw error;
+  return { id: Number(data.id_atividade) };
+}
+
+export async function updateActivity(input: ActivityInput & { id: number }) {
+  const { error } = await requireSupabase()
+    .from("atividades")
+    .update(activityRow(input))
+    .eq("id_atividade", input.id);
+  if (error) throw error;
+  return { id: input.id };
+}
+
+export async function updateActivityStatus(activityId: number, status: ActivityStatus, boardOrder = 0) {
+  const { error } = await requireSupabase()
+    .from("atividades")
+    .update({ status, ordem_quadro: boardOrder })
+    .eq("id_atividade", activityId);
+  if (error) throw error;
+  return { id: activityId };
+}
+
+export async function deleteActivity(activityId: number) {
+  const { error } = await requireSupabase()
+    .from("atividades")
+    .update({ ativo: false })
+    .eq("id_atividade", activityId);
+  if (error) throw error;
 }
 
 export async function getSales(): Promise<Sale[]> {

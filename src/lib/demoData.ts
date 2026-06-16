@@ -1,4 +1,4 @@
-import type { Customer, DashboardMetrics, PaymentMethod, Product, Sale } from "../types";
+import type { Activity, ActivitySummary, Customer, DashboardMetrics, PaymentMethod, Product, Sale } from "../types";
 
 export const demoProducts: Product[] = [
   { id: 1, name: "Brasileirinho", description: null, category: "Pratos Principais", price: 28.5, available: true, weight: 500, measure: "grama", yieldServings: 20 },
@@ -37,4 +37,52 @@ export const demoDashboard: DashboardMetrics = {
     { name: "Feijoada Veg", quantity: 10, revenue: 340 }
   ],
   recentSales: demoSales
+};
+
+export const demoActivities: Activity[] = [
+  {
+    id: 1,
+    title: "Comprar embalagens do evento",
+    description: "Conferir quantidade antes de sair para compras.",
+    status: "a_fazer",
+    priority: "alta",
+    owner: "Equipe",
+    category: "Compras",
+    startDate: new Date().toISOString().slice(0, 10),
+    dueDate: new Date().toISOString().slice(0, 10),
+    completedAt: null,
+    note: null,
+    boardOrder: 1,
+    active: true,
+    createdBy: "Sistema",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 2,
+    title: "Testar rendimento da baguete",
+    description: "Validar quantidade para eventos maiores.",
+    status: "em_andamento",
+    priority: "media",
+    owner: "Cozinha",
+    category: "Producao",
+    startDate: new Date().toISOString().slice(0, 10),
+    dueDate: null,
+    completedAt: null,
+    note: null,
+    boardOrder: 1,
+    active: true,
+    createdBy: "Sistema",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
+
+export const demoActivitySummary: ActivitySummary = {
+  open: 2,
+  overdue: 0,
+  dueToday: 1,
+  dueSoon: 1,
+  highPriority: 1,
+  completedThisWeek: 0
 };
