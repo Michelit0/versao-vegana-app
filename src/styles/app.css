@@ -1306,6 +1306,49 @@ textarea:focus {
   width: min(100%, 560px);
 }
 
+.management-modal-card {
+  max-height: calc(100vh - 36px);
+  max-width: 1120px;
+  overflow-y: auto;
+  width: min(100%, 1120px);
+}
+
+.management-modal-card .management-form {
+  align-items: end;
+}
+
+.recipe-form-wide {
+  grid-column: 1 / -1;
+}
+
+.recipe-line-heading {
+  margin: 8px 0 12px;
+}
+
+.recipe-line-list {
+  display: grid;
+  gap: 12px;
+}
+
+.recipe-line-editor {
+  align-items: end;
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: 14px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 34px minmax(260px, 1.45fr) minmax(110px, 0.45fr) minmax(140px, 0.55fr) minmax(96px, 0.35fr) 48px;
+  padding: 14px;
+}
+
+.recipe-line-editor > * {
+  min-width: 0;
+}
+
+.recipe-line-editor .event-row-number {
+  align-self: center;
+}
+
 .delete-customer-summary {
   background: var(--vv-surface-2);
   border: 1px solid var(--vv-border);
@@ -1705,6 +1748,7 @@ textarea:focus {
   .today-panel,
   .ops-summary-grid,
   .recipe-edit-row,
+  .recipe-line-editor,
   .kitchen-control-grid,
   .event-product-row,
   .checkout-bar,

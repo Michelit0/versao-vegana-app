@@ -76,6 +76,8 @@ type NewRecipeInput = {
 
 type UpdateRecipeItemInput = {
   id: string;
+  productId?: number;
+  resourceId?: number;
   quantity: number;
   measure: string;
   preparationOrder?: number | null;
@@ -656,11 +658,24 @@ export async function createRecipe(input: NewRecipeInput) {
 }
 
 export async function updateRecipeItem(input: UpdateRecipeItemInput) {
-  const row = {
+  const row: Record<string, unknown> = {
     qtd_ingrediente: input.quantity,
     tipo_medida: input.measure,
     ordem_preparo: input.preparationOrder ?? null
   };
+  if (input.productId || input.resourceId) {
+    const [products, resources] = await Promise.all([getProducts(), getResources()]);
+    const product = input.productId ? products.find((item) => item.id === input.productId) : null;
+    const resource = input.resourceId ? resources.find((item) => item.id === input.resourceId) : null;
+    if (input.productId) {
+      row.id_produto = input.productId;
+      row.nome_produto = product?.name ?? null;
+    }
+    if (input.resourceId) {
+      row.id_recurso = input.resourceId;
+      row.nome_recurso = resource?.name ?? null;
+    }
+  }
   const { error } = await requireSupabase()
     .from("receitas")
     .update(row)
