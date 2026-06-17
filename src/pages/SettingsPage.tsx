@@ -13,12 +13,13 @@ type SettingsPageProps = {
 
 const roleOptions: Array<{ value: UserRole; label: string }> = [
   { value: "admin", label: "Admin tecnico" },
-  { value: "socia", label: "Socia" },
   { value: "operacao", label: "Operacao" },
   { value: "cozinha", label: "Cozinha" },
   { value: "consulta", label: "Consulta" },
   { value: "autoatendimento", label: "Autoatendimento" }
 ];
+
+const ADMIN_EMAIL = "restauranteversao.vegana@gmail.com";
 
 export function SettingsPage({ allowedUsers, currentProfile, supabaseReady, onChanged, onRefresh }: SettingsPageProps) {
   const [editing, setEditing] = useState<AllowedUser | null>(null);
@@ -28,7 +29,7 @@ export function SettingsPage({ allowedUsers, currentProfile, supabaseReady, onCh
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const canManageUsers = currentProfile.role === "admin" || currentProfile.role === "socia";
+  const canManageUsers = currentProfile.role === "admin";
 
   useEffect(() => {
     if (!editing) return;
@@ -50,6 +51,10 @@ export function SettingsPage({ allowedUsers, currentProfile, supabaseReady, onCh
     setMessage(null);
     if (!name.trim() || !email.trim()) {
       setMessage("Informe nome e email.");
+      return;
+    }
+    if (role === "admin" && email.trim().toLowerCase() !== ADMIN_EMAIL) {
+      setMessage(`O unico email administrador permitido e ${ADMIN_EMAIL}.`);
       return;
     }
     setSaving(true);

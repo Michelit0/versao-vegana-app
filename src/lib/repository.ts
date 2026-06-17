@@ -1505,8 +1505,9 @@ function normalizePaymentStatus(value: unknown): SalePaymentStatus {
 }
 
 function normalizeUserRole(value: unknown): UserRole {
-  if (value === "admin" || value === "socia" || value === "operacao" || value === "cozinha" || value === "consulta" || value === "autoatendimento") {
+  if (value === "admin" || value === "operacao" || value === "cozinha" || value === "consulta" || value === "autoatendimento") {
     return value;
   }
+  if (value === "socia") return "operacao";
   return "consulta";
 }

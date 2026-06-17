@@ -294,6 +294,24 @@ button { cursor: pointer; }
 .login-mode button { flex: 1; }
 .login-action { justify-content: center; width: 100%; }
 
+.link-button {
+  background: transparent;
+  border: 0;
+  color: var(--vv-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 850;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.login-link {
+  justify-self: center;
+  padding: 4px 8px;
+}
+
 .login-hint {
   align-items: center;
   background: var(--vv-surface-2);

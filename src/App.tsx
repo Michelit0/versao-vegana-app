@@ -19,17 +19,17 @@ import type { Activity, ActivityResponsible, ActivitySubtask, ActivitySummary, A
 type Page = "dashboard" | "bi-dashboard" | "new-sale" | "self-service" | "kitchen" | "events" | "planner" | "sales" | "registrations" | "operations" | "settings";
 
 const navItems: Array<{ id: Page; label: string; icon: typeof BarChart3; roles: UserRole[] }> = [
-  { id: "dashboard", label: "Painel", icon: BarChart3, roles: ["admin", "socia", "operacao", "cozinha", "consulta"] },
-  { id: "bi-dashboard", label: "Dashboard BI", icon: LayoutDashboard, roles: ["admin", "socia", "operacao", "consulta"] },
-  { id: "new-sale", label: "Nova venda", icon: Plus, roles: ["admin", "socia", "operacao"] },
-  { id: "self-service", label: "Autoatendimento", icon: ShoppingBag, roles: ["admin", "socia", "operacao", "autoatendimento"] },
-  { id: "kitchen", label: "Cozinha", icon: ChefHat, roles: ["admin", "socia", "operacao", "cozinha"] },
-  { id: "events", label: "Eventos", icon: CalendarDays, roles: ["admin", "socia", "operacao", "cozinha"] },
-  { id: "planner", label: "Atividades", icon: ListTodo, roles: ["admin", "socia", "operacao"] },
-  { id: "sales", label: "Pedidos", icon: ClipboardList, roles: ["admin", "socia", "operacao", "cozinha"] },
-  { id: "registrations", label: "Cadastros", icon: Users, roles: ["admin", "socia", "operacao"] },
-  { id: "operations", label: "Operações", icon: Wrench, roles: ["admin", "socia", "operacao"] },
-  { id: "settings", label: "Sistema", icon: Settings, roles: ["admin", "socia"] }
+  { id: "dashboard", label: "Painel", icon: BarChart3, roles: ["admin", "operacao", "cozinha", "consulta"] },
+  { id: "bi-dashboard", label: "Dashboard BI", icon: LayoutDashboard, roles: ["admin", "operacao", "consulta"] },
+  { id: "new-sale", label: "Nova venda", icon: Plus, roles: ["admin", "operacao"] },
+  { id: "self-service", label: "Autoatendimento", icon: ShoppingBag, roles: ["admin", "operacao", "autoatendimento"] },
+  { id: "kitchen", label: "Cozinha", icon: ChefHat, roles: ["admin", "operacao", "cozinha"] },
+  { id: "events", label: "Eventos", icon: CalendarDays, roles: ["admin", "operacao", "cozinha"] },
+  { id: "planner", label: "Atividades", icon: ListTodo, roles: ["admin", "operacao"] },
+  { id: "sales", label: "Pedidos", icon: ClipboardList, roles: ["admin", "operacao", "cozinha"] },
+  { id: "registrations", label: "Cadastros", icon: Users, roles: ["admin", "operacao"] },
+  { id: "operations", label: "Operações", icon: Wrench, roles: ["admin", "operacao"] },
+  { id: "settings", label: "Sistema", icon: Settings, roles: ["admin"] }
 ];
 
 const pagesWithNewSaleShortcut = new Set<Page>(["dashboard", "sales"]);
@@ -38,6 +38,7 @@ export function App() {
   const [activePage, setActivePage] = useState<Page>("dashboard");
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [passwordRecovery, setPasswordRecovery] = useState(() => window.location.hash.includes("type=recovery"));
   const [allowedUsers, setAllowedUsers] = useState<AllowedUser[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -65,7 +66,7 @@ export function App() {
   }
 
   async function refreshAllowedUsers(currentProfile = profile) {
-    if (!currentProfile || !["admin", "socia"].includes(currentProfile.role)) return;
+    if (!currentProfile || currentProfile.role !== "admin") return;
     setAllowedUsers(await getAllowedUsers());
   }
 
@@ -123,7 +124,8 @@ export function App() {
   useEffect(() => {
     void refreshAuthProfile();
     if (!supabase) return;
-    const { data } = supabase.auth.onAuthStateChange(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
       void refreshAuthProfile();
     });
     return () => data.subscription.unsubscribe();
@@ -182,8 +184,8 @@ export function App() {
     return <main className="login-shell"><section className="login-card"><h1>Carregando sistema...</h1></section></main>;
   }
 
-  if (!profile) {
-    return <LoginPage onAuthenticated={async () => { const current = await refreshAuthProfile(); if (current?.active) await refreshData(); }} />;
+  if (!profile || passwordRecovery) {
+    return <LoginPage onAuthenticated={async () => { setPasswordRecovery(false); const current = await refreshAuthProfile(); if (current?.active) await refreshData(); }} />;
   }
 
   return (

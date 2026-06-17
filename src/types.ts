@@ -201,7 +201,7 @@ export type ActivitySummary = {
   completedThisWeek: number;
 };
 
-export type UserRole = "admin" | "socia" | "operacao" | "cozinha" | "consulta" | "autoatendimento";
+export type UserRole = "admin" | "operacao" | "cozinha" | "consulta" | "autoatendimento";
 
 export type UserProfile = {
   id: string;
